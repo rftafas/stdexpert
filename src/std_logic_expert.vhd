@@ -233,7 +233,6 @@ package body std_logic_expert is
 	-- return tmp2;
   -- end "+";
 
-
   -- function "*" (l:std_logic_vector; r: unsigned        ) return integer;    -- f1
   -- function "*" (l:unsigned;         r: std_logic_vector) return integer;    -- f1
   -- function "*" (l:std_logic_vector; r: std_logic_vector) return integer;    -- f1

@@ -24,10 +24,7 @@ architecture simulation of std_logic_expert_tb is
 	constant ZERO_svl    : std_logic_vector(7 downto 0) := (others => '0');
 	constant TOP_svl     : std_logic_vector(7 downto 0) := (others => '1');
 
-	signal   counter_svl : std_logic_vector(3 downto 0) := "0000";
-	signal factor1   : std_logic_vector(3 downto 0) := x"F";
-	signal factor2   : std_logic_vector(3 downto 0) := x"2";
-	signal product12 : std_logic_vector(7 downto 0) := x"FF";
+	signal test_tmp : boolean;
 
 begin
 
@@ -36,9 +33,34 @@ begin
 		severity failure;
 
 		main : process
+			variable tmp_svl1    : std_logic_vector(7 downto 0) := x"05";
+			variable tmp_svl2    : std_logic_vector(7 downto 0) := x"05";
+			variable tmp_int1    : integer := 5;
+			variable tmp_int2    : integer := 0;
 	  begin
 	    test_runner_setup(runner, runner_cfg);
-	    report "Hello world!";
+
+			while test_suite loop
+				if run("Sanity check for system.") then
+					report "System Sane. Begin tests.";
+					check_true(true, result("Sanity check for system."));
+				elsif run("Testing = comparator std_logic_vector/integer") then
+					tmp_svl1 := x"05";
+					tmp_int1 := 5;
+					check_true(tmp_svl1 = tmp_int1, result("comparator std_logic_vector/integer."));
+				elsif run("Testing = comparator integer/std_logic_vector") then
+					tmp_svl1 := x"05";
+					tmp_int1 := 5;
+					check_true(tmp_int1 = tmp_svl1, result("comparator std_logic_vector/integer."));
+				elsif run("testing sum between std_logic_vector") then
+										  tmp_svl1 := tmp_svl1 + tmp_svl1;
+					  tmp_int1 := to_integer(unsigned(tmp_svl1));
+						check_equal(tmp_int1,10,result("test"));
+				elsif run("testing sum with integer") then
+
+				end if;
+
+			end loop;
 	    test_runner_cleanup(runner); -- Simulation ends here
 	  end process;
 
