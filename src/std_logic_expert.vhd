@@ -2,8 +2,8 @@
 --
 -- Library name: REPO
 -- Package name: STD_LOGIC_EXPERT
--- Author: Ricardo F Tafas Jr
--- Company: RepoDinâmica
+-- Author:       Ricardo F Tafas Jr
+-- Company:      Repo Dinamica - www.repodinamica.com.br
 -- THIS IS OPEN SOURCE CODE. You can clone it on GITHUB:
 -- https://github.com/rftafas/std_logic_expert.git
 --
@@ -26,11 +26,9 @@
 --------------------------------------------------------------------------------------------------------
 -- Features:
 --1) fixes the annoying "TO_INTEGER", "TO_SIGNED" and "TO_UNSIGNED" typecasts.
---2) defines +, -, * for std_logic types. Always UNSIGNED. Usually we just want to convert indexing using STD_LOGIC_VECTORs.
---and to be honest, if you are doing math with STD_LOGIC without carefully evaluating the type you are using, you are doing it
---wrong.
---3) It defines a division for VHDL. Sorry mate, it is going to be slow and only accounts for the quocient.
---4) BUT if you want the reminder, use REM. we got you covered.
+--2) defines +, -, * for std_logic types. Always UNSIGNED. Usually we just want to convert indexing
+--   using STD_LOGIC_VECTORs. and to be honest, if you are doing math with STD_LOGIC without carefully
+--   evaluating the type you are using, you are doing it wrong.
 --------------------------------------------------------------------------------------------------------
 library IEEE;
 	use IEEE.std_logic_1164.all;
