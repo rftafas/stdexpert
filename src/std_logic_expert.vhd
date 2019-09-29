@@ -11,7 +11,7 @@
 -- USAGE:
 -- Library REPO;
 -- USE REPO.STD_LOGIC_EXPERT.ALL
---------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
 -- DESCRIPTION
 -- VHDL2008 came with the NUMERIC_STD package. It comes as a replacement of STD_LOGIC_ARITH,
 -- STD_LOGIC_SIGNED and STD_LOGIC_UNSIGNED.
@@ -67,6 +67,11 @@ package std_logic_expert is
 	function "=" (l:integer;          r: std_logic_vector) return boolean;
 	function "=" (l:std_logic_vector; r: unsigned)         return boolean;
 	function "=" (l:unsigned;         r: std_logic_vector) return boolean;
+
+	function ">" (l:std_logic_vector; r: integer)          return boolean;
+	function ">" (l:integer;          r: std_logic_vector) return boolean;
+	function ">" (l:std_logic_vector; r: unsigned)         return boolean;
+	function ">" (l:unsigned;         r: std_logic_vector) return boolean;
 
 end std_logic_expert;
 
@@ -284,5 +289,48 @@ function "=" (l:unsigned; r: std_logic_vector) return boolean is
  end if;
  return tmp;
 end "=";
+
+--------------------------------------------------------------------------------------------------------
+-- Operator: >
+--------------------------------------------------------------------------------------------------------
+function ">" (l:std_logic_vector; r: integer) return boolean is
+	variable tmp : boolean;
+begin
+ tmp := false;
+ if unsigned(l) > r then
+	tmp := true;
+ end if;
+ return tmp;
+end ">";
+
+function ">" (l:integer; r: std_logic_vector) return boolean is
+	variable tmp : boolean;
+begin
+tmp := false;
+if unsigned(r) > l then
+ tmp := true;
+end if;
+return tmp;
+end ">";
+
+function ">" (l:std_logic_vector; r: unsigned) return boolean is
+ variable tmp : boolean;
+begin
+tmp := false;
+if unsigned(l) > r then
+ tmp := true;
+end if;
+return tmp;
+end ">";
+
+function ">" (l:unsigned; r: std_logic_vector) return boolean is
+ variable tmp : boolean;
+begin
+tmp := false;
+if unsigned(r) > l then
+tmp := true;
+end if;
+return tmp;
+end ">";
 
 end std_logic_expert;
