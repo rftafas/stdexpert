@@ -44,14 +44,33 @@ begin
 				if run("Sanity check for system.") then
 					report "System Sane. Begin tests.";
 					check_true(true, result("Sanity check for system."));
-				elsif run("Testing '='' comparator for std_logic_vector") then
+				elsif run("Testing '=' comparator for std_logic_vector") then
 					tmp_svl1 := x"05";
-					tmp_int1 := 5;
 					check_true(tmp_svl1 = 5, result("comparator std_logic_vector/integer."));
-					check_true(5 = tmp_svl1, result("comparator integer/std_logic_vector."));
-					check_true(tmp_svl1 = unsigned(5,8), result("comparator std_logic_vector/unsigned."));
-					check_true(unsigned(5,8) = tmp_svl1, result("comparator unsigned/std_logic_vector."));
+					check_false(tmp_svl1 = 6, result("comparator std_logic_vector/integer."));
+
+					check_true( 5 = tmp_svl1, result("comparator integer/std_logic_vector."));
+					check_false(6 = tmp_svl1, result("comparator integer/std_logic_vector."));
+
+					check_true( tmp_svl1 = unsigned(5,8), result("comparator std_logic_vector/unsigned."));
+					check_false(tmp_svl1 = unsigned(6,8), result("comparator std_logic_vector/unsigned."));
+
+					check_true( unsigned(5,8) = tmp_svl1, result("comparator unsigned/std_logic_vector."));
+					check_false(unsigned(6,8) = tmp_svl1, result("comparator unsigned/std_logic_vector."));
+
 				elsif run("Testing '>' comparator for std_logic_vector") then
+					
+					check_true( tmp_svl1 > 4, result("comparator std_logic_vector/integer."));
+					check_false(tmp_svl1 > 6, result("comparator std_logic_vector/integer."));
+
+					check_true( 6 > tmp_svl1, result("comparator integer/std_logic_vector."));
+					check_false(4 > tmp_svl1, result("comparator integer/std_logic_vector."));
+
+					check_true( tmp_svl1 > unsigned(4,8), result("comparator std_logic_vector/unsigned."));
+					check_false(tmp_svl1 > unsigned(6,8), result("comparator std_logic_vector/unsigned."));
+
+					check_true( unsigned(6,8) > tmp_svl1, result("comparator unsigned/std_logic_vector."));
+					check_false(unsigned(4,8) > tmp_svl1, result("comparator unsigned/std_logic_vector."));
 
 				elsif run("testing sum between std_logic_vector") then
 				elsif run("testing sum between std_logic_vector") then
