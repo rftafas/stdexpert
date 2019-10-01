@@ -63,10 +63,21 @@ package std_logic_expert is
 	function "*" (l:std_logic_vector; r: integer         ) return std_logic_vector;
 	function "*" (l:integer         ; r: std_logic_vector) return integer;
 
+	function "/" (l:std_logic_vector; r: unsigned        ) return std_logic_vector;
+	function "/" (l:unsigned;         r: std_logic_vector) return unsigned;
+	function "/" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector;
+	function "/" (l:std_logic_vector; r: integer         ) return std_logic_vector;
+	function "/" (l:integer         ; r: std_logic_vector) return integer;
+
 	function "=" (l:std_logic_vector; r: integer)          return boolean;
 	function "=" (l:integer;          r: std_logic_vector) return boolean;
 	function "=" (l:std_logic_vector; r: unsigned)         return boolean;
 	function "=" (l:unsigned;         r: std_logic_vector) return boolean;
+
+  --mod
+	--rem
+
+  --Relational operators
 
 	function ">" (l:std_logic_vector; r: integer)          return boolean;
 	function ">" (l:integer;          r: std_logic_vector) return boolean;
@@ -290,6 +301,44 @@ package body std_logic_expert is
 	 tmp := l * to_integer(unsigned(r));
 	 return tmp;
   end "*";
+
+	--------------------------------------------------------------------------------------------------------
+	-- Operator: =
+	--------------------------------------------------------------------------------------------------------
+  function "/" (l:std_logic_vector; r: unsigned        ) return std_logic_vector is
+  	variable tmp : std_logic_vector(l'range);
+  begin
+		tmp := std_logic_vector(unsigned(l)/r);
+		return tmp;
+  end "/";
+
+  function "/" (l:unsigned;         r: std_logic_vector) return unsigned is
+  	variable tmp : unsigned(l'range);
+  begin
+		tmp := l/unsigned(r);
+		return tmp;
+  end "/";
+
+   function "/" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector is
+  	 variable tmp : std_logic_vector(l'range);
+   begin
+		 tmp := std_logic_vector(unsigned(l)/unsigned(r));
+		 return tmp;
+   end "/";
+
+  function "/" (l:std_logic_vector; r: integer         ) return std_logic_vector is
+  	variable tmp : std_logic_vector(l'range);
+  begin
+		tmp := std_logic_vector(unsigned(l)/to_unsigned(r,l'length));
+		return tmp;
+  end "/";
+
+  function "/" (l:integer         ; r: std_logic_vector) return integer is
+  	variable tmp : integer;
+  begin
+	tmp := l/to_integer(unsigned(r));
+	return tmp;
+  end "/";
 
 	--------------------------------------------------------------------------------------------------------
 	-- Operator: =
