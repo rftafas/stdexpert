@@ -59,7 +59,7 @@ begin
 					check_false(unsigned(6,8) = tmp_svl1, result("comparator unsigned/std_logic_vector."));
 
 				elsif run("Testing '>' comparator for std_logic_vector") then
-					
+
 					check_true( tmp_svl1 > 4, result("comparator std_logic_vector/integer."));
 					check_false(tmp_svl1 > 6, result("comparator std_logic_vector/integer."));
 
