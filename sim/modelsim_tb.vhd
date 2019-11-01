@@ -6,10 +6,10 @@ library IEEE;
 library work;
 	use work.std_logic_expert.all;
 
-entity std_logic_expert_tb is
-end std_logic_expert_tb;
+entity modelsim_tb is
+end modelsim_tb;
 
-architecture simulation of std_logic_expert_tb is
+architecture simulation of modelsim_tb is
 
 	signal numerador      : std_logic_vector(7 downto 0) := x"00";
   signal denominador    : std_logic_vector(7 downto 0) := x"00";

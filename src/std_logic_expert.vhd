@@ -34,21 +34,17 @@ library IEEE;
 	use IEEE.std_logic_1164.all;
 	use IEEE.numeric_std.all;
 
---declaramos a entidade
 package std_logic_expert is
 
-	--CONVERSIONS
-	-- function toba ( input :         unsigned       		   ) return  integer;
-	-- function toba ( input :           signed				   ) return  integer;
-  function to_integer         ( input : std_logic_vector                ) return integer;
-  function to_std_logic_vector( input :          integer; size : integer) return std_logic_vector;
-    -- function toba  ( input :          integer; size : integer) return   signed;
+	function to_integer         ( input : std_logic_vector    ) return integer;
+	function to_std_logic_vector( input : integer; size : integer) return std_logic_vector;
 
 	function "+" (l:std_logic_vector; r: unsigned        ) return std_logic_vector;
 	function "+" (l:unsigned;         r: std_logic_vector) return unsigned;
 	function "+" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector;
 	function "+" (l:std_logic_vector; r: integer         ) return std_logic_vector;
 	function "+" (l:integer         ; r: std_logic_vector) return integer;
+	function "+" (l:gray            ; r: gray            ) return gray;
 
 	function "-" (l:std_logic_vector; r: unsigned        ) return std_logic_vector;
 	function "-" (l:unsigned;         r: std_logic_vector) return unsigned;
@@ -110,28 +106,19 @@ package std_logic_expert is
 	function "<=" (l:std_logic_vector; r: unsigned)         return boolean;
 	function "<=" (l:unsigned;         r: std_logic_vector) return boolean;
 
+	--INTERNAL FUNCTIONS. NOT INTENDED TO BE USED DIRECTLY
+
+	function temp_gray_f000 ( input : std_logic_vector	      ) return  std_logic_vector;
+	function temp_gray_f001 ( input : std_logic_vector	      ) return  gray;
+	function temp_gray_f002 ( input : gray            	      ) return  std_logic_vector;
+
 end std_logic_expert;
 
 --a arquitetura
 package body std_logic_expert is
 
-  -- --UNSIGNED TO INTEGER
-  -- function integer( input : unsigned) return integer is
-    -- variable tmp : integer;
-  -- begin
-    -- tmp := to_integer(input);
-	-- return tmp;
-  -- end integer;
-
-  -- --SIGNED TO INTEGER
-  -- function integer( input : signed) return integer is
-    -- variable tmp : integer;
-  -- begin
-    -- tmp := to_integer(input);
-	-- return tmp;
-  -- end integer;
-
-  --INTEGER TO STD_LOGIC_VECTOR
+	----------------------------------------------------------------------------------------------
+  --TO INTEGER
   function to_integer( input : std_logic_vector) return integer is
     variable tmp : integer;
   begin
@@ -139,7 +126,8 @@ package body std_logic_expert is
 		return tmp;
   end to_integer;
 
-  --INTEGER TO UNSIGNED
+
+  --TO STD_LOGIC_VECTOR
   function to_std_logic_vector( input : integer; size : integer) return std_logic_vector is
     variable tmp : std_logic_vector(size-1 downto 0);
   begin
@@ -157,6 +145,14 @@ package body std_logic_expert is
 		return tmp;
   end to_std_logic_vector;
 
+	function to_std_logic_vector( input : gray) return std_logic_vector is
+    variable tmp : std_logic_vector(input'range);
+  begin
+		for j in input'range loop
+			tmp(j) := input(j);
+		end loop;
+		return tmp;
+  end to_std_logic_vector;
 
   -- --INTEGER TO UNSIGNED
   -- function unsigned( input : integer; size : integer) return unsigned is
@@ -528,7 +524,7 @@ function ">" (l:integer; r: std_logic_vector) return boolean is
 	variable tmp : boolean;
 begin
 	tmp := false;
-	if unsigned(r) > l then
+	if l > unsigned(r) then
 	 tmp := true;
 	end if;
 	return tmp;
@@ -548,7 +544,7 @@ function ">" (l:unsigned; r: std_logic_vector) return boolean is
  variable tmp : boolean;
 begin
 	tmp := false;
-	if unsigned(r) > l then
+	if l > unsigned(r) then
 	tmp := true;
 	end if;
 	return tmp;
@@ -571,7 +567,7 @@ function "<" (l:integer; r: std_logic_vector) return boolean is
 	variable tmp : boolean;
 begin
 	tmp := false;
-	if unsigned(r) < l then
+	if l < unsigned(r) then
 	 tmp := true;
 	end if;
 	return tmp;
@@ -591,7 +587,7 @@ function "<" (l:unsigned; r: std_logic_vector) return boolean is
  variable tmp : boolean;
 begin
 	tmp := false;
-	if unsigned(r) < l then
+	if l < unsigned(r) then
 	tmp := true;
 	end if;
 	return tmp;
