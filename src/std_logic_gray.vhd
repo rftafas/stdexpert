@@ -16,20 +16,22 @@ package std_logic_gray is
 	function to_integer         ( input : gray_vector ) return integer;
 
 	--Operadores
-	function "+"   (l:gray_vector ; r: gray_vector  ) return gray_vector;
-	function "+"   (l:gray_vector ; r: integer      ) return gray_vector;
+	function "+"   (l:gray_vector; r: gray_vector) return gray_vector;
+	function "+"   (l:gray_vector; r: integer    ) return gray_vector;
 
-	function "-"   (l:gray_vector; r: unsigned      ) return std_logic_vector;
-	function "*"   (l:std_logic_vector; r: unsigned ) return std_logic_vector;
-	function "/"   (l:std_logic_vector; r: unsigned	) return std_logic_vector;
-	function "mod" (l:std_logic_vector; r: unsigned ) return std_logic_vector;
-	function "rem" (l:std_logic_vector; r: unsigned ) return std_logic_vector;
-	function "="   (l:std_logic_vector; r: integer  ) return boolean;
-	function "/="  (l:std_logic_vector; r: integer  ) return boolean;
-	function ">"   (l:std_logic_vector; r: integer  ) return boolean;
-	function "<"   (l:std_logic_vector; r: integer  ) return boolean;
-	function ">="  (l:std_logic_vector; r: integer  ) return boolean;
-	function "<="  (l:std_logic_vector; r: integer  ) return boolean;
+	function "-"   (l:gray_vector; r: gray_vector) return std_logic_vector;
+	function "-"   (l:gray_vector; r: integer    ) return std_logic_vector;
+
+	--function "*"   (l:gray_vector; r: gray_vector) return std_logic_vector;
+	--function "/"   (l:gray_vector; r: gray_vector) return std_logic_vector;
+	--function "mod" (l:gray_vector; r: gray_vector) return std_logic_vector;
+	--function "rem" (l:gray_vector; r: gray_vector) return std_logic_vector;
+	--function "="   (l:gray_vector; r: gray_vector) return boolean;
+	--function "/="  (l:gray_vector; r: gray_vector) return boolean;
+	function ">"   (l:gray_vector; r: gray_vector) return boolean;
+	function "<"   (l:gray_vector; r: gray_vector) return boolean;
+	function ">="  (l:gray_vector; r: gray_vector) return boolean;
+	function "<="  (l:gray_vector; r: gray_vector) return boolean;
 
 	--INTERNAL FUNCTIONS. NOT INTENDED TO BE USED DIRECTLY
 	function temp_gray_f000 ( input : std_logic_vector	      ) return  std_logic_vector;
@@ -41,27 +43,30 @@ end std_logic_gray;
 --a arquitetura
 package body std_logic_gray is
 
-
-
-	function to_gray ( input : std_logic_vector       	) return  gray_vector is
-		variable tmp  : gray_vector(input'range);
+	function to_gray_vector ( input : std_logic_vector ) return  gray_vector is
+		variable tmp : std_logic_vector(input'range);
 	begin
-		tmp := temp_gray_f001(input);
-	end to_gray;
+		tmp := temp_gray_f001(tmp);
+		return tmp;
+	end to_gray_vector;
 
-	function to_gray ( input : unsigned       	) return  gray_vector is
-		variable tmp  : gray_vector(input'range);
+	function to_gray_vector ( input : unsigned       	) return  gray_vector is
+		variable tmp : std_logic_vector(input'range);
 	begin
-		tmp := temp_gray_f001(temp_gray_f000(std_logic_vector(input)));
-	end to_gray;
+		tmp := std_logic_vector(input);
+		tmp := temp_gray_f000(tmp);
+		tmp := temp_gray_f001(tmp);
+		return tmp;
+	end to_gray_vector;
 
-	function to_gray ( input : integer; size : integer       	) return  gray_vector is
-		variable tmp  : gray_vector(input'range);
+	function to_gray_vector ( input : integer; size : integer       	) return  gray_vector is
+		variable tmp : std_logic_vector(input'range);
 	begin
-		tmp := temp_gray_f001(temp_gray_f000(std_logic_vector(input,size)));
-	end to_gray;
-
-	------
+		tmp := to_std_logic_vector(input,size);
+		tmp := temp_gray_f000(tmp);
+		tmp := temp_gray_f001(tmp);
+		return tmp;
+	end to_gray_vector;
 
 	function to_std_logic_vector( input : gray_vector ) return std_logic_vector is
 		variable tmp : std_logic_vector(input'range);
@@ -93,12 +98,40 @@ package body std_logic_gray is
 		return tmp;
 	end "+";
 
-	function "+" (l:gray_vector; r: integer        ) return gray_vector is
+	function "-" (l:gray_vector; r: gray_vector        ) return gray_vector is
 		variable tmp : gray_vector(l'range);
 	begin
-		tmp := to_gray( to_unsigned(l) + to_unsigned(r,l'length) );
+		tmp := to_gray( to_unsigned(l) - to_unsigned(r) );
 		return tmp;
-	end "+";
+	end "-";
+
+	function ">" (l:gray_vector; r: gray_vector        ) return gray_vector is
+		variable tmp : boolean;
+	begin
+		tmp := to_unsigned(l) > to_unsigned(r);
+		return tmp;
+	end ">";
+
+	function ">=" (l:gray_vector; r: gray_vector        ) return gray_vector is
+		variable tmp : boolean;
+	begin
+		tmp := to_unsigned(l) >= to_unsigned(r);
+		return tmp;
+	end ">=";
+
+	function "<" (l:gray_vector; r: gray_vector        ) return gray_vector is
+		variable tmp : boolean;
+	begin
+		tmp := to_unsigned(l) < to_unsigned(r);
+		return tmp;
+	end "<";
+
+	function "<=" (l:gray_vector; r: gray_vector        ) return gray_vector is
+		variable tmp : boolean;
+	begin
+		tmp := to_unsigned(l) <= to_unsigned(r);
+		return tmp;
+	end "<=";
 
 ------------------------------------------------------------------------------------------------------
 	--TO GRAY. this function performs the binary value conversion of a normal
