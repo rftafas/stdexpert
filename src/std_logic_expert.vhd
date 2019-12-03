@@ -131,10 +131,10 @@ package body std_logic_expert is
   function to_std_logic_vector( input : integer; size : integer) return std_logic_vector is
     variable tmp : std_logic_vector(size-1 downto 0);
   begin
-		assert size < 1
+		assert size > 0
 			report "Vector size on conversion must be greater than 0."
 			severity failure;
-		assert size = 1
+		assert size > 1
 			report "Vector size on conversion is 1."
 			severity warning;
 		assert input >= 0
