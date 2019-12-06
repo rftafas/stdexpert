@@ -8,12 +8,13 @@ package std_logic_gray is
 
 	--CONVERSIONS to GRAY
 	function to_gray_vector ( input : std_logic_vector	) return  gray_vector;
-	function to_gray_vector ( input : unsigned       	) return  gray_vector;
-	function to_gray_vector ( input : bit_vector 		  ) return  gray_vector;
+	function to_gray_vector ( input : unsigned       	  ) return  gray_vector;
 	function to_gray_vector ( input : integer; size : integer) return gray_vector;
 
-	--COMVERSIONS TO INTEGER
-	function to_integer         ( input : gray_vector ) return integer;
+	--COMVERSIONS FROM GRAY
+	function to_std_logic_vector ( input : gray_vector ) return std_logic_vector;
+	function to_unsigned         ( input : gray_vector ) return unsigned;
+	function to_integer          ( input : gray_vector ) return integer;
 
 	--Operadores
 	function "+"   (l:gray_vector; r: gray_vector      ) return gray_vector;
