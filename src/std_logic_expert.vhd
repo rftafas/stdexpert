@@ -44,7 +44,6 @@ package std_logic_expert is
 	function "+" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector;
 	function "+" (l:std_logic_vector; r: integer         ) return std_logic_vector;
 	function "+" (l:integer         ; r: std_logic_vector) return integer;
-	function "+" (l:gray            ; r: gray            ) return gray;
 
 	function "-" (l:std_logic_vector; r: unsigned        ) return std_logic_vector;
 	function "-" (l:unsigned;         r: std_logic_vector) return unsigned;
