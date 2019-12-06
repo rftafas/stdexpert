@@ -22,7 +22,7 @@ package std_logic_gray is
 	function "+"   (l:gray_vector; r: unsigned         ) return gray_vector;
 	function "+"   (l:gray_vector; r: std_logic_vector ) return gray_vector;
 
-	function "-"   (l:gray_vector; r: gray_vector      ) return std_logic_vector;
+	function "-"   (l:gray_vector; r: gray_vector      ) return gray_vector;
 	function "-"   (l:gray_vector; r: integer          ) return gray_vector;
 	function "-"   (l:gray_vector; r: unsigned         ) return gray_vector;
 	function "-"   (l:gray_vector; r: std_logic_vector ) return gray_vector;
@@ -39,10 +39,10 @@ package std_logic_gray is
 	function "<="  (l:gray_vector; r: gray_vector) return boolean;
 
 	--INTERNAL FUNCTIONS. NOT INTENDED TO BE USED DIRECTLY
-	function gray_encoder   ( input : std_logic_vector	      ) return  std_logic_vector;
-	function gray_decoder   ( input : std_logic_vector	      ) return  std_logic_vector;
-	function translate2gray ( input : std_logic_vector	      ) return  gray;
-	function translate2svl  ( input : gray            	      ) return  std_logic_vector;
+	function gray_encoder   ( input : std_logic_vector ) return  std_logic_vector;
+	function gray_decoder   ( input : std_logic_vector ) return  std_logic_vector;
+	function translate2gray ( input : std_logic_vector ) return  gray_vector;
+	function translate2svl  ( input : gray_vector	   ) return  std_logic_vector;
 
 end std_logic_gray;
 
@@ -65,9 +65,9 @@ package body std_logic_gray is
 	end to_gray_vector;
 
 	function to_gray_vector ( input : integer; size : integer       	) return  gray_vector is
-		variable tmp : std_logic_vector(input'range);
+		variable tmp : std_logic_vector(size-1 downto 0);
 	begin
-		tmp := to_std_logic_vector(to_unsigned(input,size));
+		tmp := std_logic_vector( to_unsigned(input,size) );
 		tmp := gray_encoder(tmp);
 		return translate2gray(tmp);
 	end to_gray_vector;
@@ -88,7 +88,7 @@ package body std_logic_gray is
 		return unsigned(tmp);
 	end to_unsigned;
 
-	function to_integer( gray_vector ) return integer is
+	function to_integer( input : gray_vector ) return integer is
 		variable tmp : std_logic_vector(input'range);
 	begin
 		tmp := translate2svl(input);
@@ -152,42 +152,42 @@ package body std_logic_gray is
 		return tmp;
 	end "-";
 
-	function "=" (l:gray_vector; r: gray_vector        ) return gray_vector is
+	function "=" (l:gray_vector; r: gray_vector        ) return boolean is
 		variable tmp : boolean;
 	begin
 		tmp := translate2svl(l) = translate2svl(r);
 		return tmp;
 	end "=";
 
-	function "/=" (l:gray_vector; r: gray_vector        ) return gray_vector is
+	function "/=" (l:gray_vector; r: gray_vector        ) return boolean is
 		variable tmp : boolean;
 	begin
 		tmp := translate2svl(l) /= translate2svl(r);
 		return tmp;
 	end "/=";
 
-	function ">" (l:gray_vector; r: gray_vector        ) return gray_vector is
+	function ">" (l:gray_vector; r: gray_vector        ) return boolean is
 		variable tmp : boolean;
 	begin
 		tmp := to_unsigned(l) > to_unsigned(r);
 		return tmp;
 	end ">";
 
-	function ">=" (l:gray_vector; r: gray_vector        ) return gray_vector is
+	function ">=" (l:gray_vector; r: gray_vector        ) return boolean is
 		variable tmp : boolean;
 	begin
 		tmp := to_unsigned(l) >= to_unsigned(r);
 		return tmp;
 	end ">=";
 
-	function "<" (l:gray_vector; r: gray_vector        ) return gray_vector is
+	function "<" (l:gray_vector; r: gray_vector        ) return boolean is
 		variable tmp : boolean;
 	begin
 		tmp := to_unsigned(l) < to_unsigned(r);
 		return tmp;
 	end "<";
 
-	function "<=" (l:gray_vector; r: gray_vector        ) return gray_vector is
+	function "<=" (l:gray_vector; r: gray_vector        ) return boolean is
 		variable tmp : boolean;
 	begin
 		tmp := to_unsigned(l) <= to_unsigned(r);
@@ -198,9 +198,8 @@ package body std_logic_gray is
 --if someone wants to work with STD_LOGIC_VECTOR instead GRAY_VECTOR, one can use
 --the following functions.
 	function gray_encoder( input : std_logic_vector ) return  std_logic_vector is
-		tmp  : std_logic_vector(input'range);
+		variable tmp  : std_logic_vector(input'range);
 	begin
-		tmp := to_unsigned(input,size);
 		for j in tmp'range loop
 			if j = input'high then
 				tmp(j) := input(j);
@@ -212,9 +211,8 @@ package body std_logic_gray is
 	end gray_encoder;
 
 	function gray_decoder( input : std_logic_vector ) return  std_logic_vector is
-		tmp  : std_logic_vector(input'range);
+		variable tmp  : std_logic_vector(input'range);
 	begin
-		tmp := to_unsigned(input,size);
 		for j in tmp'range loop
 			if j = input'high then
 				tmp(j) := input(j);
@@ -226,7 +224,7 @@ package body std_logic_gray is
 	end gray_decoder;
 
 	function translate2gray ( input : std_logic_vector	) return  gray_vector is
-		tmp  : gray_vector(input'range);
+		variable tmp  : gray_vector(input'range);
 	begin
 		for j in input'range loop
 			tmp(j) := input(j);
@@ -235,7 +233,7 @@ package body std_logic_gray is
 	end translate2gray;
 
 	function translate2svl ( input : gray_vector	) return  std_logic_vector is
-		tmp  : std_logic_vector(input'range);
+		variable tmp : std_logic_vector(input'range);
 	begin
 		for j in input'range loop
 			tmp(j) := input(j);
