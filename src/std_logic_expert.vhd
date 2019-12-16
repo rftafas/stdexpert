@@ -105,12 +105,6 @@ package std_logic_expert is
 	function "<=" (l:std_logic_vector; r: unsigned)         return boolean;
 	function "<=" (l:unsigned;         r: std_logic_vector) return boolean;
 
-	--INTERNAL FUNCTIONS. NOT INTENDED TO BE USED DIRECTLY
-
-	function temp_gray_f000 ( input : std_logic_vector	      ) return  std_logic_vector;
-	function temp_gray_f001 ( input : std_logic_vector	      ) return  gray;
-	function temp_gray_f002 ( input : gray            	      ) return  std_logic_vector;
-
 end std_logic_expert;
 
 --a arquitetura
@@ -141,15 +135,6 @@ package body std_logic_expert is
 			severity failure;
 	--contrato para o input não ser maior que 2**size-1
     tmp := std_logic_vector(to_unsigned(input,size));
-		return tmp;
-  end to_std_logic_vector;
-
-	function to_std_logic_vector( input : gray) return std_logic_vector is
-    variable tmp : std_logic_vector(input'range);
-  begin
-		for j in input'range loop
-			tmp(j) := input(j);
-		end loop;
 		return tmp;
   end to_std_logic_vector;
 
