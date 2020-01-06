@@ -235,7 +235,7 @@ package body std_logic_expert is
    function "-" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector is
   	 variable tmp : std_logic_vector(l'range);
    begin
-		 tmp := std_logic_vector(unsigned(r)-unsigned(l));
+		 tmp := std_logic_vector(unsigned(l)-unsigned(r));
 		 return tmp;
    end "-";
 
