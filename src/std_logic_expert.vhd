@@ -36,8 +36,9 @@ library IEEE;
 
 package std_logic_expert is
 
-	function to_integer         ( input : std_logic_vector    ) return integer;
+	function to_integer         ( input : std_logic_vector       ) return integer;
 	function to_std_logic_vector( input : integer; size : integer) return std_logic_vector;
+	function to_std_logic_vector( input : std_logic              ) return std_logic_vector;
 
 	function "+" (l:std_logic_vector; r: unsigned        ) return std_logic_vector;
 	function "+" (l:unsigned;         r: std_logic_vector) return unsigned;
@@ -135,6 +136,13 @@ package body std_logic_expert is
 			severity failure;
 	--contrato para o input não ser maior que 2**size-1
     tmp := std_logic_vector(to_unsigned(input,size));
+		return tmp;
+  end to_std_logic_vector;
+
+	function to_std_logic_vector( input : std_logic ) return std_logic_vector is
+    variable tmp : std_logic_vector(0 downto 0);
+  begin
+    tmp(0) := input;
 		return tmp;
   end to_std_logic_vector;
 
