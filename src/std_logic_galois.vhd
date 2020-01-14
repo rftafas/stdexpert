@@ -33,27 +33,24 @@ library IEEE;
 	use IEEE.numeric_std.all;
 
 package std_logic_galois is
-    generic(
-        field : std_logic_vector
-    );
+	generic(
+	    polynome_vector : std_logic_vector
+	);
 
-function get_field_order ( galois_gen_poly : std_logic_vector ) return integer;
-    
-    constant field_order : integer := get_field_order(field);
+	--these function return the order of any polynome. we will need this to create a galois type.
+	function get_order ( input : std_logic_vector ) return integer;
+	constant field_order : integer := get_order(polynome_vector);
 
-    type galois_vector is array (field_order-1 downto 0) of std_logic;
-    
-    
-    function translate2svl   ( input : galois_vector	) return  std_logic_vector;
-    
-	--CONVERSIONS to GRAY
+	--with the order, we create a galois type. Galois operation on galois type are automatic.
+	type galois_vector is array (field_order-1 downto 0) of std_logic;
+	type galois_polynome is array (NATURAL RANGE <>) of galois_vector;
+
 	--function to_galois_vector ( input : galois_value;     field : to_galois_vector ) return galois_vector;
 	function to_galois_vector ( input : std_logic_vector ) return galois_vector;
 	function to_galois_vector ( input : unsigned         ) return galois_vector;
 	function to_galois_vector ( input : integer          ) return galois_vector;
 
-	--COMVERSIONS FROM GRAY
-	--function to_std_logic_vector ( input : galois_vector ) return std_logic_vector;
+	function to_std_logic_vector ( input : galois_vector ) return std_logic_vector;
 	function to_unsigned         ( input : galois_vector ) return unsigned;
 	--function to_integer          ( input : galois_vector ) return integer;
 
@@ -63,7 +60,7 @@ function get_field_order ( galois_gen_poly : std_logic_vector ) return integer;
 
 	function "*"   (l:galois_vector; r: galois_vector) return galois_vector;
 	--function "/"   (l:gray_vector; r: gray_vector) return std_logic_vector;
-	--function "mod" (l:gray_vector; r: gray_vector) return std_logic_vector;
+	function "mod" (l:gray_vector; r: gray_vector) return std_logic_vector;
 	--function "rem" (l:gray_vector; r: gray_vector) return std_logic_vector;
 	function "="   (l:galois_vector; r: galois_vector) return boolean;
 	function "/="  (l:galois_vector; r: galois_vector) return boolean;
@@ -72,21 +69,16 @@ function get_field_order ( galois_gen_poly : std_logic_vector ) return integer;
 	function ">="  (l:galois_vector; r: galois_vector) return boolean;
 	function "<="  (l:galois_vector; r: galois_vector) return boolean;
 
+	function get_order ( input : galois_vector ) return integer;
+	constant polynome_field : galois_vector(polynome_vector'range) := to_galois_vector(polynome_vector);
+
 end std_logic_galois;
 
---a arquitetura
 package body std_logic_galois is
 
-	function translate2svl ( input : galois_vector	) return  std_logic_vector is
-		variable tmp : std_logic_vector(input'range);
-	begin
-		for j in input'range loop
-			tmp(j) := input(j);
-		end loop;
-		return tmp;
-	end translate2svl;
 
-  function get_field_order ( galois_gen_poly : std_logic_vector ) return integer is
+
+  function get_order ( input : std_logic_vector ) return integer is
       variable tmp : integer := 0;
   begin
     for j in galois_gen_poly'range loop
@@ -97,7 +89,14 @@ package body std_logic_galois is
       end if;
     end loop;
     return tmp;
-  end get_field_order;
+  end get_order;
+
+	function get_order ( input : galois_vector ) return integer is
+		variable tmp : std_logic_vector(input'range) := 0;
+  begin
+		tmp := to_std_logic_vector(input);
+    return get_order(tmp);
+  end get_order;
 
 	function to_galois_vector ( input : std_logic_vector) return galois_vector is
 	   variable tmp : galois_vector;
@@ -128,6 +127,15 @@ package body std_logic_galois is
 	   return tmp;
 	end to_galois_vector;
 
+	function to_std_logic_vector ( input : galois_vector	) return  std_logic_vector is
+		variable tmp : std_logic_vector(input'range);
+	begin
+		for j in input'range loop
+			tmp(j) := input(j);
+		end loop;
+		return tmp;
+	end to_std_logic_vector;
+
 	function to_unsigned ( input : galois_vector ) return unsigned is
 	   variable tmp : unsigned(input'range);
 	begin
@@ -145,18 +153,18 @@ package body std_logic_galois is
 		variable tmp : galois_vector;
 	begin
 	   for j in tmp'range loop
-	   tmp(j) := l(j) xor r(j);
+	   	tmp(j) := l(j) xor r(j);
 	   end loop;
-	   return tmp;	   
+	   return tmp;
 	end "+";
 
 	function "-" (l:galois_vector; r: galois_vector        ) return galois_vector is
 		variable tmp : galois_vector;
 	begin
 	   for j in tmp'range loop
-	   tmp(j) := l(j) xor r(j);
+	   	tmp(j) := l(j) xor r(j);
 	   end loop;
-	   return tmp;	   
+	   return tmp;
 	end "-";
 
 	function "*" (l:galois_vector; r: galois_vector        ) return galois_vector is
@@ -169,29 +177,69 @@ package body std_logic_galois is
           end loop;
         end loop;
         --depois a redução.
-        for j in tmp'high downto l'length loop --length = high+1
-          if tmp(j) = '1' then
-            for k in 0 to field_order loop
-              --order 8 poly fits on 9 bits, 8 downto 0.
-              --we go until tmp bits 8 downto 0 get xored by gen poly.
-              tmp(j-k) := tmp(j-k) xor field(field_order-k);
-            end loop;
-          end if;
-        end loop;
+        tmp := tmp mod polynome_field;
         return tmp(l'range);
 	end "*";
-	
+
+	function "/" (l:galois_vector; r: galois_vector        ) return galois_vector is
+		variable tmp : galois_vector( (l'range) := (others=>'0');
+	begin
+		tmp := to_galois_vector( to_unsigned(l) / to_unsigned(r) );
+		return tmp;
+	end "/";
+
+	function "mod" (l:galois_vector; r: galois_vector        ) return galois_vector is
+		variable tmp : galois_vector( (l'range) := (others=>'0');
+		variable r_order : integer;
+		variable l_order : integer;
+	begin
+		--depois a redução.
+		tmp := l;
+		r_order := get_order(r);
+		l_order := get_order(l);
+		for j in l_order downto r_order loop --length = high+1
+			if l(j) = '1' then
+				for k in 0 to r_order loop
+					--order 8 poly fits on 9 bits, 8 downto 0.
+					--we go until tmp bits 8 downto 0 get xored by gen poly.
+					tmp(j-k) := tmp(j-k) xor r(r_order-k);
+				end loop;
+			end if;
+		end loop;
+		return tmp(l'range);
+	end "mod";
+
+	function "mod" (l:galois_polynome; r: galois_polynome        ) return galois_polynome is
+		variable tmp     : galois_polynome(l'range) := (others=>'0');
+		variable tmp2    : galois_vector  (l'range) := (others=>'0');
+		variable r_order : integer;
+		variable l_order : integer;
+	begin
+		--depois a redução.
+		tmp := l;
+		r_order := get_order(r);
+		l_order := get_order(l);
+		for j in l_order downto r_order loop --length = high+1
+			if l(j) > to_galois_vector(0) then
+				for k in 0 to r_order loop
+					tmp(j-k) := tmp(j-k) + ( l(j) * r(r_order-k) );
+				end loop;
+			end if;
+		end loop;
+		return tmp(l'range);
+	end "mod";
+
 	function "=" (l:galois_vector; r: galois_vector        ) return boolean is
 		variable tmp : boolean;
 	begin
-		tmp := translate2svl(l) = translate2svl(r);
+		tmp := to_unsigned(l) = to_unsigned(r);
 		return tmp;
 	end "=";
 
 	function "/=" (l:galois_vector; r: galois_vector        ) return boolean is
 		variable tmp : boolean;
 	begin
-		tmp := translate2svl(l) /= translate2svl(r);
+		tmp := to_unsigned(l) /= to_unsigned(r);
 		return tmp;
 	end "/=";
 
