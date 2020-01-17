@@ -41,7 +41,8 @@ architecture Behavioral of test_galois is
     signal input1    : std_logic_vector(7 downto 0);
     signal input2    : std_logic_vector(7 downto 0);
 
-
+    signal ck : std_logic := '0';
+    
     signal a_s      : galois_vector;
     signal b_s      : galois_vector;
     signal mult_s   : galois_vector;
@@ -114,10 +115,16 @@ architecture Behavioral of test_galois is
         evaluate(constant_message * roots_cte(0))
     );
     
+    --test pipeline mod
+    signal pipe_input1    : galois_polynome(6 downto 0) := msg_poly;
+    signal pipe_input2    : galois_polynome(4 downto 0) := generator_poly;
+    
+    signal pipe_poly_temp : galois_pipe;
+    signal pipe_result_s    : galois_polynome(6 downto 0);
+    
 begin
 
     process
-        
     begin
         input1   <= x"36";
         input2   <= x"12";
@@ -181,6 +188,19 @@ begin
 		end loop;
 
         wait;
+    end process;
+
+    ck <= not ck after 10 ns;
+
+    process(ck)
+        variable pipe_result    : galois_polynome(6 downto 0);
+    begin
+        if rising_edge(ck) then
+        for j in 6 downto 0 loop
+            pipeline_mod(pipe_input1, pipe_input2, pipe_result, pipe_poly_temp);
+        end loop;
+        pipe_result_s <= pipe_result;
+        end if;
     end process;
 
     a_s      <= to_galois_vector(input1);
