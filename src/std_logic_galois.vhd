@@ -15,7 +15,7 @@
 --  package std_logic_galois_8 is new expert.std_logic_galois
 --      generic map (
 --          size => 8,
---          polynome_vector(8 downto 0) => (8=>'1', 4=>'1', 3=>'1', 1=>'1', 0=>'1', others=>'0')
+--          field_generator(8 downto 0) => (8=>'1', 4=>'1', 3=>'1', 1=>'1', 0=>'1', others=>'0')
 --      );
 --  use work.std_logic_galois_8.all -- it must be work.
 --
@@ -40,11 +40,10 @@ library IEEE;
 package std_logic_galois is
 	-- generic(
 	-- 	field_order     : integer := 8;
-	--   polynome_vector : std_logic_vector(field_order downto 0) := (others=>'0')
+	--   field_generator : std_logic_vector(field_order downto 0) := (others=>'0')
 	-- );
-  constant polynome_vector : std_logic_vector(8 downto 0) := (8=>'1', 4=>'1', 3=>'1', 2=>'1', 0=>'1', others=>'0');
-
-	constant field_order : integer := 8;
+  constant field_generator : std_logic_vector(8 downto 0) := (8=>'1', 4=>'1', 3=>'1', 2=>'1', 0=>'1', others=>'0');
+	constant field_order     : integer := 8;
 
 	--these function return the order of any polynome. we will need this to create a galois type.
 	function get_order ( input : std_logic_vector ) return integer;
@@ -66,8 +65,9 @@ package std_logic_galois is
 	function to_integer          ( input : galois_vector ) return integer;
 
 	--Operadores
-	function "+"   (l:galois_vector; r: galois_vector      ) return galois_vector;
-	function "-"   (l:galois_vector; r: galois_vector      ) return galois_vector;
+	function "+"   (l:galois_vector;   r: galois_vector   ) return galois_vector;
+	function "+"   (l:galois_polynome; r: galois_polynome ) return galois_polynome;
+	function "-"   (l:galois_vector;   r: galois_vector   ) return galois_vector;
 
 	function "*"   (l:galois_vector;   r: galois_vector   ) return galois_vector;
 	function "*"   (l:galois_polynome; r: galois_polynome ) return galois_polynome;
@@ -96,21 +96,21 @@ package std_logic_galois is
 	function "<="  (l:galois_vector; r: std_logic_vector) return boolean;
 
 	--generic functions for polynome operations
-	function evaluate      ( input:galois_polynome    ) return galois_vector;
+	function evaluate ( input:galois_polynome; x_input : galois_vector) return galois_vector;
 	function galois_reduce ( input : std_logic_vector ) return galois_vector;
 	function galois_inv    ( input : galois_vector    ) return galois_vector;
 	function get_order     ( input : galois_vector    ) return integer;
-	function galois_mult   ( l:galois_vector;   r: galois_vector   ) return std_logic_vector;
+	function galois_mult   ( l:galois_vector;   r: galois_vector ) return std_logic_vector;
+	function field_roots_func return galois_polynome;
 
 	--procedure pipeline_mult (l: in galois_polynome; r: in galois_polynome; result : out galois_polynome; signal tmp : inout std_logic_vector );
 	procedure pipeline_mod ( signal l: in galois_polynome; signal r: in galois_polynome; result : out galois_polynome; signal reg : inout galois_pipe );
 
 	--some important internal constants.
-	constant b_integer : integer := 2**field_order-2;
-	constant b_size    : integer := integer(ceil(log2(real(b_integer))));
-	constant b_value   : unsigned(b_size-1 downto 0) := to_unsigned(b_integer, b_size);
-
-
+	constant b_integer   : integer := 2**field_order-2;
+	constant b_size      : integer := integer(ceil(log2(real(b_integer))));
+	constant b_value     : unsigned(b_size-1 downto 0) := to_unsigned(b_integer, b_size);
+	constant field_roots : galois_polynome(field_order downto 0) := field_roots_func;
 
 end std_logic_galois;
 
@@ -211,12 +211,19 @@ package body std_logic_galois is
 	end "+";
 
 	function "+" (l:galois_polynome; r: galois_polynome        ) return galois_polynome is
-		variable tmp : galois_polynome;
+		variable tmp : galois_polynome( maximum(l'high,r'high) - 1 downto 0);
 	begin
-	   for j in tmp'range loop
-	   	tmp(j) := l(j) + r(j);
-	   end loop;
-	   return tmp;
+
+	  for j in tmp'range loop
+			if j >= l'length then
+	   		tmp(j) := r(j);
+			elsif j >= r'length then
+				tmp(j) := l(j);
+			else
+				tmp(j) := l(j) + r(j);
+			end if;
+	  end loop;
+	  return tmp;
 	end "+";
 
 	function "-" (l:galois_vector; r: galois_vector        ) return galois_vector is
@@ -352,13 +359,16 @@ package body std_logic_galois is
 		tmp := l;
 		r_order := get_order(r);
 		l_order := get_order(l);
-		for j in l_order downto r_order loop --length = high+1
-			if l(j) = '1' then
-				for k in 0 to r_order loop
-					--order 8 poly fits on 9 bits, 8 downto 0.
-					--we go until tmp bits 8 downto 0 get xored by gen poly.
-					tmp(j-k) := tmp(j-k) xor r(r_order-k);
-				end loop;
+		--for j in l_order downto r_order loop --we fix the boundaries. tool likes it.
+		for j in tmp'range loop
+			if j <= l_order and j >= r_order then
+				if l(j) = '1' then
+					for k in 0 to r_order loop
+						--order 8 poly fits on 9 bits, 8 downto 0.
+						--we go until tmp bits 8 downto 0 get xored by gen poly.
+						tmp(j-k) := tmp(j-k) xor r(r_order-k);
+					end loop;
+				end if;
 			end if;
 		end loop;
 		return tmp(l'range);
@@ -511,7 +521,7 @@ package body std_logic_galois is
             for k in 0 to field_order loop
                 --order 8 poly fits on 9 bits, 8 downto 0.
                 --we go until tmp bits 8 downto 0 get xored by gen poly.
-                tmp(j-k) := tmp(j-k) xor polynome_vector(field_order-k);
+                tmp(j-k) := tmp(j-k) xor field_generator(field_order-k);
             end loop;
         end if;
     end loop;
@@ -531,12 +541,12 @@ package body std_logic_galois is
         return tmp;
 	end galois_mult;
 
-	function evaluate ( input:galois_polynome ) return galois_vector is
+	function evaluate ( input:galois_polynome; x_input : galois_vector) return galois_vector is
 		variable tmp : galois_vector;
 	begin
 		tmp := to_galois_vector(0);
 		for j in input'range loop
-			tmp := input(J) + tmp;
+			tmp := (input(J) * (x_input ** j) ) + tmp;
 		end loop;
 		return tmp;
 	end evaluate;
@@ -565,6 +575,12 @@ package body std_logic_galois is
 		end if;
 		return tmp;
 	end part_div;
+
+	procedure pipeline_mult ( signal l: in galois_vector; signal r: in galois_vector; result : out galois_vector; signal reg : inout std_logic_vector ) is
+	begin
+		reg    <= galois_mult(l,r);
+		result := galois_reduce(reg);
+	end pipeline_mult;
 
 	--usage:
 	-- to make reminder = poly1 mod poly2 do:
@@ -596,5 +612,13 @@ package body std_logic_galois is
 		result := reg(reg'high);
 	end pipeline_mod;
 
+	function field_roots_func return galois_polynome is
+		variable tmp : galois_polynome(field_order downto 0);
+	begin
+		for j in 0 to field_order loop
+			tmp(j) := to_galois_vector(2) ** j;
+		end loop;
+		return tmp;
+	end field_roots_func;
 
 end std_logic_galois;
