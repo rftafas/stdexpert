@@ -73,6 +73,8 @@ package std_logic_galois is
 	function "*"   (l:galois_polynome; r: galois_polynome ) return galois_polynome;
 	function "*"   (l:galois_polynome; r: galois_vector   ) return galois_polynome;
 	function "/"   (l:galois_vector;   r: galois_vector   ) return galois_vector;
+	function "/"   (l:galois_polynome; r: galois_polynome ) return galois_polynome;
+	function "/"   (l:galois_polynome; r: galois_vector   ) return galois_polynome;
 	function "mod" (l:galois_vector;   r: galois_vector   ) return galois_vector;
 	function "mod" (l:galois_polynome; r: galois_polynome ) return galois_polynome;
 
@@ -95,6 +97,8 @@ package std_logic_galois is
 	function ">="  (l:galois_vector; r: std_logic_vector) return boolean;
 	function "<="  (l:galois_vector; r: std_logic_vector) return boolean;
 
+	function "sll"  (l:galois_polynome; r: integer) return galois_polynome;
+
 	--generic functions for polynome operations
 	function evaluate ( input:galois_polynome; x_input : galois_vector) return galois_vector;
 	function galois_reduce ( input : std_logic_vector ) return galois_vector;
@@ -102,7 +106,7 @@ package std_logic_galois is
 	function get_order     ( input : galois_vector    ) return integer;
 	function galois_mult   ( l:galois_vector;   r: galois_vector ) return std_logic_vector;
 	function field_roots_func return galois_polynome;
-
+	function root_locator(input:galois_polynome) return galois_polynome;
 	--procedure pipeline_mult (l: in galois_polynome; r: in galois_polynome; result : out galois_polynome; signal tmp : inout std_logic_vector );
 	procedure pipeline_mod ( signal l: in galois_polynome; signal r: in galois_polynome; result : out galois_polynome; signal reg : inout galois_pipe );
 
@@ -211,10 +215,17 @@ package body std_logic_galois is
 	end "+";
 
 	function "+" (l:galois_polynome; r: galois_polynome        ) return galois_polynome is
-		variable tmp : galois_polynome( maximum(l'high,r'high) - 1 downto 0);
+		--variable tmp : galois_polynome( maximum(l'high,r'high) - 1 downto 0); --when vivado sim support this, remove this comment.
+		variable tmp : galois_polynome( l'high + r'high downto 0);
+		variable size : integer;
 	begin
+		if l'high > r'high then
+			size := l'high;
+		else
+			size := r'high;
+		end if;
 
-	  for j in tmp'range loop
+	  for j in size downto 0 loop
 			if j >= l'length then
 	   		tmp(j) := r(j);
 			elsif j >= r'length then
@@ -223,7 +234,7 @@ package body std_logic_galois is
 				tmp(j) := l(j) + r(j);
 			end if;
 	  end loop;
-	  return tmp;
+	  return tmp(size downto 0);
 	end "+";
 
 	function "-" (l:galois_vector; r: galois_vector        ) return galois_vector is
@@ -256,7 +267,7 @@ package body std_logic_galois is
 	end "*";
 
 	function "*" (l:galois_polynome; r: galois_polynome        ) return galois_polynome is
-		variable tmp : galois_polynome( (l'length + r'length - 1) downto 0 ) := (others=>(others=>'0'));
+		variable tmp : galois_polynome( l'high + r'high downto 0 ) := (others=>(others=>'0'));
 	begin
 	  --primeiro a multiplicação
 	  for j in l'range loop
@@ -285,6 +296,43 @@ package body std_logic_galois is
 		tmp := l * galois_inv(r);
 		return tmp;
 	end "/";
+
+
+	function "/" (l:galois_polynome; r: galois_vector        ) return galois_polynome is
+		variable tmp : galois_polynome;
+	begin
+		for j in l'range loop
+			tmp(j) := l(j) / r;
+		end loop;
+		return tmp;
+	end "/";
+
+	function "/" (l:galois_polynome; r: galois_polynome        ) return galois_polynome is
+		variable tmp     : galois_polynome(l'range) := (others=>(others=>'0'));
+		variable tmp1    : galois_vector            := (others=>'0');
+		variable result  : galois_polynome(l'range) := (others=>(others=>'0'));
+		variable r_order : integer;
+		variable l_order : integer;
+	begin
+		--depois a redução.
+		tmp := l;
+		r_order := get_order(r);
+		l_order := get_order(l);
+		for j in l'high downto 0 loop
+			if j < r_order then
+				--we do nothing.
+			elsif tmp(j) > to_galois_vector(0) then
+				result(j-r_order) := tmp(j) * galois_inv(r(r'high));
+				for k in 1 to r_order loop
+					tmp(j-k) := tmp(j-k) - ( result(j-r_order) * r(r_order-k) );
+				end loop;
+				tmp(j) := to_galois_vector(0);
+			end if;
+		end loop;
+		return result;
+
+	end "/";
+
 
 	function "**"  (l:galois_vector; r: integer        ) return galois_vector is
 		variable tmp     : galois_vector           := to_galois_vector(1);
@@ -480,6 +528,19 @@ package body std_logic_galois is
 	end "<=";
 
 
+  function "sll"  (l:galois_polynome; r: integer) return galois_polynome is
+		variable tmp : galois_polynome;
+	begin
+		if (r > 0) and (l'length > 1) then
+			tmp(l'high downto r) := tmp(l'high-r downto 0);
+			tmp(r-1 downto 0)    := (others=>(others=>'0'));
+		else
+			tmp := l;
+		end if;
+		return tmp;
+	end "sll";
+
+
 	function galois_inv (input : galois_vector ) return galois_vector is
 		variable tmp   : galois_vector           := to_galois_vector(1);
 		variable b_tmp : unsigned(b_value'range) := b_value;
@@ -544,6 +605,7 @@ package body std_logic_galois is
 	function evaluate ( input:galois_polynome; x_input : galois_vector) return galois_vector is
 		variable tmp : galois_vector;
 	begin
+		--TO DO: should change to horner's method.
 		tmp := to_galois_vector(0);
 		for j in input'range loop
 			tmp := (input(J) * (x_input ** j) ) + tmp;
@@ -615,10 +677,24 @@ package body std_logic_galois is
 	function field_roots_func return galois_polynome is
 		variable tmp : galois_polynome(field_order downto 0);
 	begin
-		for j in 0 to field_order loop
-			tmp(j) := to_galois_vector(2) ** j;
+		tmp(0) := to_galois_vector(1);
+		for j in 1 to field_order loop
+			tmp(j) := tmp(j-1) * to_galois_vector(2);
 		end loop;
 		return tmp;
 	end field_roots_func;
+
+	function root_locator(input:galois_polynome) return galois_polynome is
+		variable tmp : galois_polynome(input'range) := (others=>(others=>'0'));
+		variable k   : integer                      := 0;
+	begin
+		for j in 1 to 2**field_order-1 loop
+			if (k <= tmp'high) and (evaluate(input,to_galois_vector(j)) = to_galois_vector(0)) then
+				tmp( k ) := to_galois_vector( j );
+				k := k + 1;
+			end if;
+		end loop;
+		return tmp;
+	end root_locator;
 
 end std_logic_galois;

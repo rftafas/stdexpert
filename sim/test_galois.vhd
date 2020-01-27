@@ -39,7 +39,7 @@ end test_galois;
 architecture Behavioral of test_galois is
     
     --testing something on library.
-    constant test_roots : galois_polynome(field_roots'range) := field_roots;
+    constant test_field_roots : galois_polynome(field_roots'range) := field_roots;
 
     signal input1    : std_logic_vector(7 downto 0);
     signal input2    : std_logic_vector(7 downto 0);
@@ -61,11 +61,17 @@ architecture Behavioral of test_galois is
     constant poly_tmp : vec_temp(4 downto 0) := (x"01", x"0f", x"36", x"78", x"40" );
     constant  msg_tmp : vec_temp(2 downto 0) := (x"12", x"34", x"56" );
     
-    --RS(7,3). We have some constants:
-    constant cons_n : integer := 7;
-    constant cons_k : integer := 3;
-    constant cons_t : integer := 4; --t=n-k
-    
+
+    --POLYNOMIAL OPS TEST
+    constant a_poly  : galois_polynome(2 downto 0) := (
+        to_galois_vector(msg_tmp(2)),
+        to_galois_vector(msg_tmp(1)),
+        to_galois_vector(msg_tmp(0))
+    );
+    constant b_poly : galois_polynome(4 downto 0) := (
+        4      => to_galois_vector(1),
+        others => to_galois_vector(0)
+    );
 
     constant generator_poly : galois_polynome(4 downto 0) := (
         to_galois_vector(poly_tmp(4)),
@@ -74,52 +80,77 @@ architecture Behavioral of test_galois is
         to_galois_vector(poly_tmp(1)),
         to_galois_vector(poly_tmp(0))
     );
+    
+    --constant generator_poly_roots : galois_polynome(generator_poly'range) := root_locator(generator_poly);
+    signal generator_poly_roots : galois_polynome(generator_poly'range);
+    
+    signal mult_poly : galois_polynome(6 downto 0);
+    signal div_poly  : galois_polynome(6 downto 0);
+    signal mod_poly  : galois_polynome(6 downto 0);
 
-    constant msg_poly : galois_polynome(cons_n - 1 downto 0) := (
+    --RS(7,3). We have some constants:
+    constant cons_n : integer := 7;
+    constant cons_k : integer := 3;
+    constant cons_t : integer := 4; --t=n-k
+
+
+
+    constant msg_poly : galois_polynome(cons_k - 1 downto 0) := (
         to_galois_vector(msg_tmp(2)),
         to_galois_vector(msg_tmp(1)),
         to_galois_vector(msg_tmp(0))
     );
     
-    constant x_n_poly : galois_polynome(cons_n-1 downto 0) := (
-        cons_n-1 => to_galois_vector(1),
-        others   => to_galois_vector(0)
+    constant x_n_poly : galois_polynome(cons_t downto 0) := (
+        cons_t => to_galois_vector(1),
+        others => to_galois_vector(0)
     );
     
     signal msg_to_tx  : galois_polynome(cons_n-1 downto 0) := (others=>(others=>'0'));
-    
-    signal error_poly  : galois_polynome(cons_n-1 downto 0) := (others=>(others=>'0'));
+    signal error_poly : galois_polynome(cons_n-1 downto 0) := (
+        cons_n-1 => to_galois_vector(1),
+        others   => (others=>'0')
+    );
+    signal msg_err     : galois_polynome(cons_n-1 downto 0) := (others=>(others=>'0'));
+
 
     --poly for the syndromes. it is n-k in size.
     signal syndrome : galois_polynome(cons_n - cons_k - 1 downto 0);  
     
     --the error locator matrix will lead to error locator poly
-    signal error_locator : galois_polynome(cons_n - 1 downto 0);
-    signal error_pos     : galois_polynome(cons_n - 1 downto 0);
+    signal error_locator   : galois_polynome(cons_n - 1 downto 0);
+    signal error_pos       : galois_polynome(cons_n - 1 downto 0);
     
     signal derivative_poly : galois_polynome(cons_n - 2 downto 0); --when we derive, the constant ( x^0 ) goes away.
+    signal evaluator_poly  : galois_polynome(cons_n + cons_k - 1 downto 0);
+    signal error_evaluator : galois_polynome(cons_n - 1 downto 0);
+    signal fix_poly        : galois_polynome(cons_n - 1 downto 0);
+    signal msg_fixed       : galois_polynome(cons_n - 1 downto 0);
     
     --ADVANCED GALOIS POLY
     -- we encourage that these functions should be used after the unpiped algo is simulated.
-    signal pipe_input1    : galois_polynome(6 downto 0) := msg_poly;
+    signal pipe_input1    : galois_polynome(6 downto 0) := (6 downto 4 => msg_poly, others=>(others=>'0'));
     signal pipe_input2    : galois_polynome(4 downto 0) := generator_poly;
     signal pipe_poly_temp : galois_pipe; --galois pipe is an evil array of array of array. no other way though.
     signal pipe_result_s  : galois_polynome(6 downto 0);
     
+    signal probe : galois_vector;
+    signal root_index : integer := 0;
+    signal index : integer := 0;
     
 begin
 
     process
         --for berlekamp
-        variable var_l    : integer;
-        variable var_m    : integer;
+        variable var_l    : integer := 0;
+        variable var_m    : integer := 1;
         variable var_d    : galois_vector;
-        variable var_b    : galois_vector;
-        variable tmp_poly : galois_polynome(cons_k + cons_n - 1 downto 0);
-        variable x_m_poly : galois_polynome(cons_k-1     downto 0);
-        variable t_poly   : galois_polynome(cons_n-1     downto 0);
-        variable b_poly   : galois_polynome(cons_n-1     downto 0);
-        variable c_poly   : galois_polynome(cons_n-1     downto 0);
+        variable var_b    : galois_vector := to_galois_vector(0);
+        variable tmp_poly : galois_polynome(cons_n + cons_k - 1 downto 0)  := (others=>(others=>'0'));
+        variable x_m_poly : galois_polynome(cons_k       downto 0) := (others=>(others=>'0'));
+        variable t_poly   : galois_polynome(cons_n-1     downto 0) := (others=>(others=>'0'));
+        variable b_poly   : galois_polynome(cons_n-1     downto 0) := (others=>(others=>'0'));
+        variable c_poly   : galois_polynome(cons_n-1     downto 0) := (others=>(others=>'0'));
         --error locator tmp
         variable error_pos_tmp : galois_vector;
     begin
@@ -129,11 +160,13 @@ begin
         
         --RS encoder
         msg_to_tx   <= (msg_poly * x_n_poly) + ( (msg_poly * x_n_poly) mod generator_poly );
+        wait for 10 ns;
         -- yes, it is just that. Challenge: use pipeline_mod or mem_mod for better synthesis.
         ------------------------------------------------------------------------------------------------
         
         --we intentionally add an error on msg_to_tx by adding a polynome.
-        msg_to_tx <= msg_to_tx + error_poly;
+        msg_err <= msg_to_tx;-- + error_poly;
+        wait for 10 ns;
         
         ------------------------------------------------------------------------------------------------
         --now we attpempt to fix it. The infamous RS decoder.
@@ -142,11 +175,24 @@ begin
         --roots are constant and usually are just 2^n mod field_generator. the galois library
         --have it done for you on the field_roots constant. It is on a polynome form, bein 0 the first constant up
         --to field_order.
+        for j in 1 to 2**field_order-1 loop
+            probe <= evaluate(generator_poly,to_galois_vector(j));
+            index <= j;
+            wait for 10 ns;
+            if (root_index <= generator_poly_roots'high) and (evaluate(generator_poly,to_galois_vector(j)) = to_galois_vector(0)) then
+				generator_poly_roots( root_index ) <= to_galois_vector( j );
+				root_index <= root_index + 1;
+            end if;
+			wait for 10 ns;
+        end loop;
+        
+        wait for 10 ns;
         
         --by the way, it sucks as name, because the field generator is experessed like the polynome generator. but they ARE NOT THE SAME.
         for j in syndrome'range loop
-            syndrome(j) <= evaluate(msg_to_tx,field_roots(j));
+            syndrome(j) <= evaluate(msg_err,generator_poly_roots(j));
         end loop;
+        wait for 10 ns;
         
         --now we create the error locator polynome. This is costy.
         --first we create a matrix of syndromes to find the coeficients A for the error locator polynome.
@@ -158,7 +204,7 @@ begin
         --3: Euclidean. this is nice and complicated and gives us BOTH error locator and error value. but it is by far the most resource consuming.
         --
         --We go with (2) adjusted for VHDL.
-        berlekamp : for j in 0 to cons_n loop
+        berlekamp : for j in 0 to cons_k loop
               --calculate discrepancy: d = S(j)+SUM(C(l)*S(j-l)) with l = 1..var_l
               var_d := syndrome(j);
               for l in 1 to var_l loop
@@ -182,9 +228,11 @@ begin
                   c_poly := c_poly + tmp_poly(c_poly'range); --was -
                   var_m  := var_m + 1;
               end if;
+              
         end loop;
-        
+
         error_locator <= c_poly;
+        wait for 10 ns;
         
         --If one has moved to euclidean, he is just fine for fixing the error. Otherwise...        
         --now that we have the error locator polynome, we have to find its roots.
@@ -193,31 +241,37 @@ begin
         --of the received message. so, for RS(7,3) and a GF(2^M) we have to test just 2^(index+1) with index from 0 to 6.
         --this, my friends, is the Chien Search.
         for j in 0 to cons_n-1 loop
-            error_pos_tmp := evaluate(error_locator,2**to_galois_vector(j))
+            error_pos_tmp := evaluate(error_locator,to_galois_vector(2**j));
             if error_pos_tmp = to_galois_vector(0) then
-                error_pos(j) <= 2**to_galois_vector(j);
+                error_pos(j) <= to_galois_vector(2**j);
             else
                 error_pos(j) <= to_galois_vector(0);
             end if;
-         end loop;
+        end loop;
+        wait for 10 ns;
         
         --we know WHERE is wrong. last step: calculate how much is wrong.
         --we use the Forney algorithm. BUT... We have to calculate the derivative of the error locator and the omega.
         --first, the redivative:
-        for j in 0 to cons_n-1 loop
-            derivative_poly(j-1) <= to_galois( (j+1)*to_integer(error_locator(j+1)) ); 
+        for j in cons_n-2 downto 0 loop
+            derivative_poly(j) <= to_galois_vector( (j+1)*to_integer(error_locator(j+1)) ); 
         end loop;
-
-        evaluator_poly  <= syndrome * error_locator; 
-        error_evaluator <= evaluator_poly / derivative_poly;
-
+        wait for 10 ns;
+        
+        evaluator_poly  <= syndrome * error_locator;
+        wait for 10 ns;
+        
+        error_evaluator <= evaluator_poly(error_evaluator'range) / derivative_poly;
+        wait for 10 ns;
         --finally, we generate an vector to be added to the message so we can fix it.
         for j in error_pos'range loop
             fix_poly(j) <= evaluate( error_evaluator,error_pos(j) );
         end loop;
+        wait for 10 ns;
         
         --then we add. if ecverything is ok, hopefully the message is the same.
-        msg_to_tx <= msg_to_tx + fix_poly;
+        msg_fixed <= msg_err + fix_poly(msg_err'range);
+        wait for 10 ns;
         
         wait;
     end process;
@@ -225,6 +279,30 @@ begin
     --Basic Galois Test
     ck <= not ck after 10 ns;
 
+
+
+    --teste de galois.
+    input1   <= x"36";--x"CC after 10 ns;
+    input2   <= x"12";--x"11 after 10 ns;
+
+
+    --Galois Vector test
+    a_s      <= to_galois_vector(input1);
+    b_s      <= to_galois_vector(input2);
+    mult_s   <= a_s * b_s;
+    div_s    <= a_s / b_s;
+    mod_s    <= a_s mod b_s;
+    inv_s    <= galois_inv(b_s);
+
+    mult_tmp_s <= galois_mult(a_s,b_s);
+    reduce_s   <= galois_reduce(mult_tmp_s);
+    
+    --galois Poly test
+    mult_poly <= a_poly    *   b_poly;
+    mod_poly  <= mult_poly mod generator_poly;
+    div_poly  <= mult_poly /   b_poly;
+    
+    --test pipelined polynome division
     process(ck)
         variable pipe_result    : galois_polynome(6 downto 0);
     begin
@@ -234,28 +312,6 @@ begin
         end loop;
         pipe_result_s <= pipe_result;
         end if;
-    end process;
-
-    --teste de galois.
-    input1   <= x"36";--x"CC after 10 ns;
-    input2   <= x"12";--x"11 after 10 ns;
-
-    a_s      <= to_galois_vector(input1);
-    b_s      <= to_galois_vector(input2);
-    mult_s   <= a_s * b_s;
-    div_s    <= a_s / b_s;
-    mod_s    <= a_s mod b_s;
-    inv_s    <= galois_inv(b_s);
-
-    mult_tmp_s <= galois_mult(input1,input2)
-    reduce_s   <= galois_reduce(mult_tmp_s);
-    
-    --Now that we agree that the library works, we put it to use for reed solomon.
-    process
-    begin
-
-
-        wait;
     end process;
 
 end Behavioral;
