@@ -47,6 +47,7 @@ package std_logic_galois is
 
 	--these function return the order of any polynome. we will need this to create a galois type.
 	function get_order ( input : std_logic_vector ) return integer;
+	--this functions returns the roots for the field baed on the field generator.
 
 
 	--with the order, we create a galois type. Galois operation on galois type are automatic.
@@ -54,6 +55,11 @@ package std_logic_galois is
 	type galois_polynome is array (NATURAL RANGE <>) of galois_vector;
 	--type galois_pipe     is array (NATURAL RANGE <>) of galois_polynome;
 	type galois_pipe     is array (6 downto 0) of galois_polynome(6 downto 0);
+
+	--function that generates the field roots.
+	function field_roots_func return galois_polynome;
+	--constant to be used with field roots.
+	constant field_roots : galois_polynome(2**field_order-2 downto 0) := field_roots_func;
 
 	--function to_galois_vector ( input : galois_value;     field : to_galois_vector ) return galois_vector;
 	function to_galois_vector ( input : std_logic_vector ) return galois_vector;
@@ -99,14 +105,16 @@ package std_logic_galois is
 
 	function "sll"  (l:galois_polynome; r: integer) return galois_polynome;
 
-	--generic functions for polynome operations
-	function evaluate ( input:galois_polynome; x_input : galois_vector) return galois_vector;
+	--some galois operators
 	function galois_reduce ( input : std_logic_vector ) return galois_vector;
 	function galois_inv    ( input : galois_vector    ) return galois_vector;
 	function get_order     ( input : galois_vector    ) return integer;
-	function galois_mult   ( l:galois_vector;   r: galois_vector ) return std_logic_vector;
-	function field_roots_func return galois_polynome;
-	function root_locator(input:galois_polynome) return galois_polynome;
+	function galois_mult   ( l     : galois_vector;   r: galois_vector ) return std_logic_vector;
+
+	--generic functions for polynome operations
+	function evaluate      ( input : galois_polynome; x_input : galois_vector) return galois_vector;
+	function root_locator  ( input : galois_polynome ) return galois_polynome;
+
 	--procedure pipeline_mult (l: in galois_polynome; r: in galois_polynome; result : out galois_polynome; signal tmp : inout std_logic_vector );
 	procedure pipeline_mod ( signal l: in galois_polynome; signal r: in galois_polynome; result : out galois_polynome; signal reg : inout galois_pipe );
 
@@ -114,7 +122,6 @@ package std_logic_galois is
 	constant b_integer   : integer := 2**field_order-2;
 	constant b_size      : integer := integer(ceil(log2(real(b_integer))));
 	constant b_value     : unsigned(b_size-1 downto 0) := to_unsigned(b_integer, b_size);
-	constant field_roots : galois_polynome(field_order downto 0) := field_roots_func;
 
 end std_logic_galois;
 
@@ -345,12 +352,8 @@ package body std_logic_galois is
 			exp_tmp := exp_tmp * (-1);
 		end if;
 
-		for j in 0 to exp_tmp loop
-			if r = 0 then
-				tmp := to_galois_vector(1);
-			else
-				tmp := tmp * l;
-			end if;
+		for j in 1 to exp_tmp loop
+			tmp := tmp * l;
 		end loop;
 
 		if r < 0 then
@@ -365,12 +368,8 @@ package body std_logic_galois is
 	begin
 		--this is dangerous and will generate huge unfeasible hardware
 		--(as for 2020, like dividers in 2010. Maybe this comment will be laughable in 2030)
-		for j in 0 to 2**r'length-1 loop
-			if r = 0 then
-				tmp := to_galois_vector(1);
-			elsif j < r then
-				tmp := tmp * l;
-			end if;
+		for j in 0 to to_integer(r) loop
+			tmp := tmp * l;
 		end loop;
 
 		report "Variable exponential operation detected. Be sure that this is intended." severity note;
@@ -675,10 +674,10 @@ package body std_logic_galois is
 	end pipeline_mod;
 
 	function field_roots_func return galois_polynome is
-		variable tmp : galois_polynome(field_order downto 0);
+		variable tmp : galois_polynome(2**field_order-2 downto 0);
 	begin
 		tmp(0) := to_galois_vector(1);
-		for j in 1 to field_order loop
+		for j in 1 to 2**field_order-2 loop
 			tmp(j) := tmp(j-1) * to_galois_vector(2);
 		end loop;
 		return tmp;
