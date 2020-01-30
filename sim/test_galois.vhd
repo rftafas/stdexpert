@@ -25,6 +25,7 @@ library expert;
 --      );
 --  use work.std_logic_galois_8.all;
   use expert.std_logic_galois.all;
+  use expert.std_logic_expert.all;
 library IEEE;
   use IEEE.STD_LOGIC_1164.ALL;
   use IEEE.NUMERIC_STD.ALL;
@@ -50,11 +51,14 @@ architecture Behavioral of test_galois is
     signal b_s        : galois_vector;
     signal mult_s     : galois_vector;
     signal div_s      : galois_vector;
+    signal div_tmp_s  : std_logic_vector(15 downto 0);
     signal mod_s      : galois_vector;
     signal inv_s      : galois_vector;
+    signal one_s      : galois_vector;
     --for partial multiplication functions
     signal mult_tmp_s : std_logic_vector(14 downto 0) := (others=>'0');
     signal reduce_s   : galois_vector;
+    signal div_j      : integer := 0;
 
 
     type vec_temp is array (NATURAL RANGE <>) of std_logic_vector(7 downto 0);
@@ -68,9 +72,16 @@ architecture Behavioral of test_galois is
         to_galois_vector(msg_tmp(1)),
         to_galois_vector(msg_tmp(0))
     );
+    
     constant in_b_poly : galois_polynome(4 downto 0) := (
         4      => to_galois_vector(1),
         others => to_galois_vector(0)
+    );
+    
+    constant in_a_inv_poly  : galois_polynome(2 downto 0) := (
+        galois_inv(in_a_poly(2)),
+        galois_inv(in_a_poly(1)),
+        galois_inv(in_a_poly(0))
     );
 
     constant generator_poly : galois_polynome(4 downto 0) := (
@@ -103,25 +114,27 @@ architecture Behavioral of test_galois is
     
     signal msg_to_tx  : galois_polynome(cons_n-1 downto 0) := (others=>(others=>'0'));
     signal error_poly : galois_polynome(cons_n-1 downto 0) := (
-        cons_n-1 => to_galois_vector(18),
-        1        => to_galois_vector(1),
+        cons_n-1 => to_galois_vector(1),
+        --0        => to_galois_vector(1),
         others   => (others=>'0')
     );
     signal msg_err     : galois_polynome(cons_n-1 downto 0) := (others=>(others=>'0'));
 
 
     --poly for the syndromes. it is n-k in size.
-    signal syndrome : galois_polynome(cons_n - cons_k - 1 downto 0);  
+    --signal syndrome : galois_polynome(cons_n - cons_k - 1 downto 0);  
+    signal syndrome : galois_polynome(cons_t-1 downto 0) := (others=>(others=>'0'));  
     
     --the error locator matrix will lead to error locator poly
-    signal error_locator   : galois_polynome(cons_n - 1 downto 0);
-    signal error_pos       : galois_polynome(cons_n - 1 downto 0);
-    
-    signal derivative_poly : galois_polynome(cons_n - 2 downto 0); --when we derive, the constant ( x^0 ) goes away.
-    signal evaluator_poly  : galois_polynome(cons_n + cons_k - 1 downto 0);
-    signal error_evaluator : galois_polynome(cons_n - 1 downto 0);
-    signal fix_poly        : galois_polynome(cons_n - 1 downto 0);
-    signal msg_fixed       : galois_polynome(cons_n - 1 downto 0);
+    signal   lambda_poly     : galois_polynome(cons_n - 1 downto 0) := (others=>(others=>'0'));
+    signal   error_location  : galois_polynome(cons_n - 1 downto 0) := (others=>(others=>'0'));  
+    signal   lambda_dx_poly  : galois_polynome(cons_n - 2 downto 0) := (others=>(others=>'0')); --when we derive, the constant ( x^0 ) goes away.
+    signal   omega_poly      : galois_polynome(cons_n + cons_k - 1 downto 0);
+    signal   evaluator_poly  : galois_polynome(cons_n + cons_k - 1 downto 0);
+    signal   error_evaluator : galois_polynome(cons_n - 1 downto 0) := (others=>(others=>'0'));
+    signal   fix_poly        : galois_polynome(cons_n - 1 downto 0) := (others=>(others=>'0'));
+    signal   msg_fixed       : galois_polynome(cons_n - 1 downto 0) := (others=>(others=>'0'));
+    constant x4_poly         : galois_polynome(cons_t     downto 0) := (4 => to_galois_vector(1), others=>(others=>'0'));
     
     --ADVANCED GALOIS POLY
     -- we encourage that these functions should be used after the unpiped algo is simulated.
@@ -131,7 +144,7 @@ architecture Behavioral of test_galois is
     signal pipe_result_s  : galois_polynome(6 downto 0);
         
     signal var_l    : integer := 0;
-    signal var_m    : integer := 1;
+    signal var_m    : integer := 0;
     signal var_d    : galois_vector := to_galois_vector(0);
     signal var_b    : galois_vector := to_galois_vector(0);
     signal tmp_poly : galois_polynome(cons_n + cons_t -1 downto 0)  := (others=>(others=>'0'));
@@ -141,6 +154,7 @@ architecture Behavioral of test_galois is
     signal c_poly   : galois_polynome(cons_n-1     downto 0) := (0 => to_galois_vector(1), others=>(others=>'0'));
 
     signal error_pos_tmp   : galois_vector := to_galois_vector(0);
+    signal index_j         : integer := 0;
     
 begin
 
@@ -183,74 +197,96 @@ begin
         --3: Euclidean. this is nice and complicated and gives us BOTH error locator and error value. but it is by far the most resource consuming.
         --
         --We go with (2) adjusted for VHDL.
+        var_m <= 0;
+        wait for 10 ns;
+        
         berlekamp : for j in 0 to cons_k loop
-              --calculate discrepancy: d = S(j)+SUM(C(l)*S(j-l)) with l = 1..var_l             
-              for i in 1 to var_l loop
-                var_d <= var_d + c_poly(i) * syndrome(j-i);
-              end loop;
+              index_j <= 1;
+              var_d <= syndrome(j);
               wait for 10 ns;
               
-              var_d <= syndrome(j) + var_d;
+              index_j <= 2;
+              --calculate discrepancy: d = S(j)+SUM(C(l)*S(j-l)) with l = 1..var_l             
+              if var_l > 0 then
+                for i in 1 to var_l loop
+                    var_d <= var_d + c_poly(i) * syndrome(j-i);
+                    wait for 10 ns;
+                end loop;
+              --else
+              --  var_d <= var_d + c_poly(1) * syndrome(j);
+              end if;            
+              
+              index_j <= 3;
               x_m_poly <= (var_m => to_galois_vector(1), others=>to_galois_vector(0) );
               wait for 10 ns;
               
-              tmp_poly <= x_m_poly * b_poly;
+              index_j <= 4;
               wait for 10 ns;
               
-              tmp_poly <= tmp_poly * (var_d * galois_inv(var_b) );
+              index_j <= 5;
+              tmp_poly <= (x_m_poly * b_poly) * (var_d / var_b) ;
               wait for 10 ns;
               
+              index_j <= 0;
               if to_integer(var_d) = 0 then              
                   var_m  <= var_m + 1;
-              elsif 2 * var_l <= j then
+              elsif 2 * var_l > j then
+                  c_poly <= c_poly - tmp_poly(c_poly'range); --was -
+                  var_m  <= var_m + 1;
+              else
                   b_poly <= c_poly;   
-                  c_poly <= c_poly + tmp_poly(c_poly'range);
+                  c_poly <= c_poly - tmp_poly(c_poly'range);
                   var_l  <= j + 1 - var_l;
                   var_b  <= var_d;
-                  var_m  <= 1;
-              else
-                  c_poly <= c_poly + tmp_poly(c_poly'range); --was -
-                  var_m  <= var_m + 1;
+                  var_m  <= var_l;
               end if;
               wait for 10 ns;
               
         end loop;
 
-        error_locator <= c_poly;
+        lambda_poly <= c_poly;
+        lambda_poly(0) <= to_galois_vector(64);
+        lambda_poly(1) <= to_galois_vector(1);
+        lambda_poly(2) <= to_galois_vector(0);
         wait for 10 ns;
         
         --If one has moved to euclidean, he is just fine for fixing the error. Otherwise...        
-        --now that we have the error locator polynome, we have to find its roots.
-        for j in 0 to cons_n-1 loop
-            error_pos_tmp <= evaluate(error_locator,to_galois_vector(2**j));
-            wait for 10 ns;
-            
+        --now that we have the error locator polynome, we have to find its roots.      
+        for j in 0 to cons_n-1 loop    
+            error_pos_tmp <= evaluate(lambda_poly,to_galois_vector(2)**j);
+            wait for 10 ns;  
             if error_pos_tmp = to_galois_vector(0) then
-                error_pos(j) <= to_galois_vector(2**j);
-            else
-                error_pos(j) <= to_galois_vector(0);
+                error_location(j) <= to_galois_vector(2)**j;
             end if;
-            wait for 10 ns;
-            
+            wait for 10 ns;         
         end loop;
+        
         wait for 10 ns;
         
         --we know WHERE is wrong. last step: calculate how much is wrong.
         --we use the Forney algorithm. BUT... We have to calculate the derivative of the error locator and the omega.
-        --first, the redivative:
+        --first, the derivative: we multiply by regular integer (i.e, several sums)
+        --as Galois sums are XOR, the even powers of x will desapear.
         for j in cons_n-2 downto 0 loop
-            derivative_poly(j) <= to_galois_vector( (j+1)*to_integer(error_locator(j+1)) ); 
+            lambda_dx_poly(j) <= (j+1)*lambda_poly(j+1); 
         end loop;
         wait for 10 ns;
         
-        evaluator_poly  <= syndrome * error_locator;
+        omega_poly  <= ( syndrome * lambda_poly ) mod x4_poly;
         wait for 10 ns;
         
-        error_evaluator <= evaluator_poly(error_evaluator'range) mod derivative_poly;
+        evaluator_poly <= omega_poly / lambda_dx_poly;
         wait for 10 ns;
+        
         --finally, we generate an vector to be added to the message so we can fix it.
-        for j in error_pos'range loop
-            fix_poly(j) <= evaluate( error_evaluator,error_pos(j) );
+        for j in error_location'range loop
+            if error_location(j) /= to_galois_vector(0) then
+                fix_poly(j) <= galois_inv(error_location(j)) * evaluate( omega_poly,error_location(j) ) / evaluate( lambda_dx_poly,error_location(j) );
+                --fix_poly(j) <= error_location(j) * evaluate( omega_poly,error_location(j) ) / evaluate( lambda_dx_poly,error_location(j) );
+            else
+                fix_poly(j) <= to_galois_vector(0);
+            end if;
+            --fix_poly(j) <= evaluate( evaluator_poly,error_location(j) );
         end loop;
         wait for 10 ns;
         
@@ -258,18 +294,16 @@ begin
         msg_fixed <= msg_err + fix_poly(msg_err'range);
         wait for 10 ns;
         
+
         wait;
     end process;
 
     --Basic Galois Test
     ck <= not ck after 10 ns;
 
-
-
     --teste de galois.
     input1   <= x"36";--x"CC after 10 ns;
     input2   <= x"12";--x"11 after 10 ns;
-
 
     --Galois Vector test
     a_s      <= to_galois_vector(input1);
@@ -277,15 +311,31 @@ begin
     mult_s   <= a_s * b_s;
     div_s    <= a_s / b_s;
     mod_s    <= a_s mod b_s;
-    inv_s    <= galois_inv(b_s);
+
+    process
+        variable tmp : galois_vector;
+    begin
+        for j in 1 to 2**field_order-2 loop
+            tmp   := to_galois_vector(j);
+            div_j <= j;
+            inv_s <= galois_inv(tmp);
+            one_s <= galois_inv(tmp) * tmp;
+            wait for 10 ns;
+        end loop;
+        wait;
+    end process;
 
     mult_tmp_s <= galois_mult(a_s,b_s);
-    reduce_s   <= galois_reduce(mult_tmp_s);
+    reduce_s   <= galois_reduce(div_tmp_s);
     
     --galois Poly test
-    mult_poly <= in_a_poly    *   in_b_poly;
+    mult_poly <= in_a_poly *   in_b_poly;
     mod_poly  <= mult_poly mod generator_poly;
-    div_poly  <= mult_poly /   b_poly;
+    div_poly  <= mult_poly /   in_b_poly,
+                 mult_poly /   in_a_poly     after 10 ns,
+                 mult_poly /   mult_poly     after 20 ns,
+                 mult_poly /   in_a_inv_poly after 30 ns;
+
     
     --test pipelined polynome division
     process(ck)

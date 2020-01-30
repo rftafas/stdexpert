@@ -74,8 +74,10 @@ package std_logic_galois is
 	function "+"   (l:galois_vector;   r: galois_vector   ) return galois_vector;
 	function "+"   (l:galois_polynome; r: galois_polynome ) return galois_polynome;
 	function "-"   (l:galois_vector;   r: galois_vector   ) return galois_vector;
+	function "-"   (l:galois_polynome; r: galois_polynome ) return galois_polynome;
 
 	function "*"   (l:galois_vector;   r: galois_vector   ) return galois_vector;
+	function "*"   (l:integer;         r: galois_vector   ) return galois_vector;
 	function "*"   (l:galois_polynome; r: galois_polynome ) return galois_polynome;
 	function "*"   (l:galois_polynome; r: galois_vector   ) return galois_polynome;
 	function "/"   (l:galois_vector;   r: galois_vector   ) return galois_vector;
@@ -109,6 +111,7 @@ package std_logic_galois is
 	function galois_reduce ( input : std_logic_vector ) return galois_vector;
 	function galois_inv    ( input : galois_vector    ) return galois_vector;
 	function get_order     ( input : galois_vector    ) return integer;
+	function get_order     ( input : galois_polynome  ) return integer;
 	function galois_mult   ( l     : galois_vector;   r: galois_vector ) return std_logic_vector;
 
 	--generic functions for polynome operations
@@ -120,8 +123,6 @@ package std_logic_galois is
 
 	--some important internal constants.
 	constant b_integer   : integer := 2**field_order-2;
-	constant b_size      : integer := integer(ceil(log2(real(b_integer))));
-	constant b_value     : unsigned(b_size-1 downto 0) := to_unsigned(b_integer, b_size);
 
 end std_logic_galois;
 
@@ -164,7 +165,7 @@ package body std_logic_galois is
 	   variable tmp : galois_vector;
 	begin
 	   for j in tmp'range loop
-	       tmp(j) := input(j);
+	       tmp(j) := input(input'low+j);
        end loop;
 	   return tmp;
 	end to_galois_vector;
@@ -254,12 +255,26 @@ package body std_logic_galois is
 	end "-";
 
 	function "-" (l:galois_polynome; r: galois_polynome        ) return galois_polynome is
-		variable tmp : galois_polynome;
+		--variable tmp : galois_polynome( maximum(l'high,r'high) - 1 downto 0); --when vivado sim support this, remove this comment.
+		variable tmp : galois_polynome( l'high + r'high downto 0);
+		variable size : integer;
 	begin
-		 for j in tmp'range loop
-			tmp(j) := l(j) - r(j);
-		 end loop;
-		 return tmp;
+		if l'high > r'high then
+			size := l'high;
+		else
+			size := r'high;
+		end if;
+
+	  for j in size downto 0 loop
+			if j >= l'length then
+	   		tmp(j) := r(j);
+			elsif j >= r'length then
+				tmp(j) := l(j);
+			else
+				tmp(j) := l(j) - r(j);
+			end if;
+	  end loop;
+	  return tmp(size downto 0);
 	end "-";
 
 	function "*" (l:galois_vector; r: galois_vector        ) return galois_vector is
@@ -271,6 +286,16 @@ package body std_logic_galois is
 				tmp2 := galois_reduce(tmp);
         return tmp2;
 
+	end "*";
+
+	function "*" (l:integer; r: galois_vector        ) return galois_vector is
+		variable tmp : galois_vector;
+	begin
+		tmp := r;
+  	if l mod 2 = 0 then
+			tmp := to_galois_vector(0);
+		end if;
+		return tmp;
 	end "*";
 
 	function "*" (l:galois_polynome; r: galois_polynome        ) return galois_polynome is
@@ -306,7 +331,7 @@ package body std_logic_galois is
 
 
 	function "/" (l:galois_polynome; r: galois_vector        ) return galois_polynome is
-		variable tmp : galois_polynome;
+		variable tmp : galois_polynome(l'range);
 	begin
 		for j in l'range loop
 			tmp(j) := l(j) / r;
@@ -329,7 +354,7 @@ package body std_logic_galois is
 			if j < r_order then
 				--we do nothing.
 			elsif tmp(j) > to_galois_vector(0) then
-				result(j-r_order) := tmp(j) * galois_inv(r(r'high));
+				result(j-r_order) := tmp(j) * galois_inv(r(r_order));
 				for k in 1 to r_order loop
 					tmp(j-k) := tmp(j-k) - ( result(j-r_order) * r(r_order-k) );
 				end loop;
@@ -541,31 +566,15 @@ package body std_logic_galois is
 
 
 	function galois_inv (input : galois_vector ) return galois_vector is
-		variable tmp   : galois_vector           := to_galois_vector(1);
-		variable b_tmp : unsigned(b_value'range) := b_value;
+		variable tmp   : galois_vector           := to_galois_vector(0);
 	begin
 		--we use fermat for Galois inversion. note that a^(-1) = a^(2^m - 2)
 		--thus, we calculate. Galois is nice because it keeps multiplication at bay.
 
 		-- hard way:
-		--for j in 1 to field_order-2 loop
-		--	tmp := tmp * input;
-		--end loop;
-		--return tmp;
-
-		--best synth result
-		b_tmp := b_value;
-		tmp   := input;
-
-		for j in b_tmp'range loop
-			if b_tmp > 1 then
-				if b_tmp(0) = '1' then
-					b_tmp := b_tmp - 1;
-					tmp := tmp * input;
-				else
-					b_tmp := '0' & b_tmp(b_tmp'high-1 downto 0);
-					tmp := tmp * tmp;
-				end if;
+		for j in 1 to 2**field_order-2 loop
+			if to_galois_vector(j) * input = to_galois_vector(1) then
+				tmp := to_galois_vector(j);
 			end if;
 		end loop;
 		return tmp;
