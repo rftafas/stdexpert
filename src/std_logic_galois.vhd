@@ -57,9 +57,11 @@ package std_logic_galois is
 	type galois_pipe     is array (6 downto 0) of galois_polynome(6 downto 0);
 
 	--function that generates the field roots.
-	function field_roots_func return galois_polynome;
+	function field_roots_func          return galois_polynome;
+	function field_inverted_roots_func return galois_polynome;
 	--constant to be used with field roots.
-	constant field_roots : galois_polynome(2**field_order-2 downto 0) := field_roots_func;
+	constant field_roots     : galois_polynome(2**field_order-2 downto 0) := field_roots_func;
+	constant field_inv_roots : galois_polynome(2**field_order-2 downto 0) := field_inverted_roots_func;
 
 	--function to_galois_vector ( input : galois_value;     field : to_galois_vector ) return galois_vector;
 	function to_galois_vector ( input : std_logic_vector ) return galois_vector;
@@ -691,6 +693,16 @@ package body std_logic_galois is
 		end loop;
 		return tmp;
 	end field_roots_func;
+
+	function field_inverted_roots_func return galois_polynome is
+		variable tmp : galois_polynome(2**field_order-2 downto 0);
+	begin
+		tmp := field_roots_func;
+		for j in 0 to 2**field_order-2 loop
+			tmp(j) := galois_inv(tmp(j));
+		end loop;
+		return tmp;
+	end field_inverted_roots_func;
 
 	function root_locator(input:galois_polynome) return galois_polynome is
 		variable tmp : galois_polynome(input'range) := (others=>(others=>'0'));

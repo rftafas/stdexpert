@@ -3,8 +3,8 @@
 library IEEE;
 	use IEEE.std_logic_1164.all;
 	use IEEE.numeric_std.all;
-library work;
-	use work.std_logic_expert.all;
+library expert;
+	use expert.std_logic_expert.all;
 
 entity modelsim_tb is
 end modelsim_tb;
