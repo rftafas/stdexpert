@@ -33,6 +33,7 @@
 library IEEE;
 	use IEEE.std_logic_1164.all;
 	use IEEE.numeric_std.all;
+	use IEEE.math_real.all;
 
 package std_logic_expert is
 
@@ -105,6 +106,8 @@ package std_logic_expert is
 	function "<=" (l:integer;          r: std_logic_vector) return boolean;
 	function "<=" (l:std_logic_vector; r: unsigned)         return boolean;
 	function "<=" (l:unsigned;         r: std_logic_vector) return boolean;
+
+	function size_for (input: integer) return integer;
 
 end std_logic_expert;
 
@@ -669,5 +672,11 @@ begin
 	end if;
 	return tmp;
 end "<=";
+
+function size_for (input: integer) return integer is
+begin
+	return integer(ceil(log2(real(input))));
+end size_for;
+
 
 end std_logic_expert;
