@@ -37,6 +37,12 @@ library IEEE;
 
 package std_logic_expert is
 
+	-- Outputs from the FIFO.
+  type range_t is record
+    high  : integer;
+    low   : integer;
+  end record range_t;
+
 	function to_integer         ( input : std_logic_vector       ) return integer;
 	function to_std_logic_vector( input : integer; size : integer) return std_logic_vector;
 	function to_std_logic_vector( input : std_logic              ) return std_logic_vector;
@@ -107,7 +113,13 @@ package std_logic_expert is
 	function "<=" (l:std_logic_vector; r: unsigned)         return boolean;
 	function "<=" (l:unsigned;         r: std_logic_vector) return boolean;
 
-	function size_for (input: integer) return integer;
+	--index operations
+	function size_of  ( input : integer                          ) return integer;
+	function size_of  ( input : integer;          word : integer ) return integer;
+	function index_of (	input : std_logic_vector                 ) return integer;
+	function rebase   (	input : std_logic_vector                 ) return std_logic_vector;
+	function range_of (	input : integer;         	word : integer ) return range_t;
+	function to_range (	input : std_logic_vector                 ) return range_t;
 
 end std_logic_expert;
 
@@ -123,10 +135,9 @@ package body std_logic_expert is
 		return tmp;
   end to_integer;
 
-
   --TO STD_LOGIC_VECTOR
-  function to_std_logic_vector( input : integer; size : integer) return std_logic_vector is
-    variable tmp : std_logic_vector(size-1 downto 0);
+	function to_std_logic_vector( input : integer; size : integer) return std_logic_vector is
+		variable tmp : std_logic_vector(size-1 downto 0);
   begin
 		assert size > 0
 			report "Vector size on conversion must be greater than 0."
@@ -135,7 +146,7 @@ package body std_logic_expert is
 			report "Vector size on conversion is 1."
 			severity warning;
 		assert input >= 0
-			report "Only positives integer allowed when converting from INTEGER to UNSIGNED."
+			report "Only positives integer allowed when converting from INTEGER to STD_LOGIC_VECTOR."
 			severity failure;
 	--contrato para o input não ser maior que 2**size-1
     tmp := std_logic_vector(to_unsigned(input,size));
@@ -420,263 +431,309 @@ package body std_logic_expert is
 -- Operator: =
 --------------------------------------------------------------------------------------------------------
 	function "=" (l:std_logic_vector; r: integer) return boolean is
-    variable tmp : boolean;
-  begin
-	 tmp := false;
-	 if unsigned(l) = r then
-	 	tmp := true;
-	 end if;
-	 return tmp;
- end "=";
-
- function "=" (l:integer; r: std_logic_vector) return boolean is
 		variable tmp : boolean;
 	begin
-	tmp := false;
-	if unsigned(r) = l then
-	 tmp := true;
-	end if;
-	return tmp;
- end "=";
+		tmp := false;
+		if unsigned(l) = r then
+			tmp := true;
+		end if;
+		return tmp;
+	end "=";
 
---  function "=" (l:std_logic_vector; r: unsigned) return boolean is
--- 	 variable tmp : boolean;
---  begin
--- 	tmp := false;
--- 	if unsigned(l) = r then
--- 	 tmp := true;
--- 	end if;
--- 	return tmp;
--- end "=";
---
--- function "=" (l:unsigned; r: std_logic_vector) return boolean is
--- 	 variable tmp : boolean;
---  begin
---  tmp := false;
---  if unsigned(r) = l then
--- 	tmp := true;
---  end if;
---  return tmp;
--- end "=";
+	function "=" (l:integer; r: std_logic_vector) return boolean is
+		variable tmp : boolean;
+	begin
+		tmp := false;
+		if unsigned(r) = l then
+			tmp := true;
+		end if;
+		return tmp;
+	end "=";
 
---------------------------------------------------------------------------------------------------------
--- Operator: /=
---------------------------------------------------------------------------------------------------------
+	--  function "=" (l:std_logic_vector; r: unsigned) return boolean is
+	-- 	 variable tmp : boolean;
+	--  begin
+	-- 	tmp := false;
+	-- 	if unsigned(l) = r then
+	-- 	 tmp := true;
+	-- 	end if;
+	-- 	return tmp;
+	-- end "=";
+	--
+	-- function "=" (l:unsigned; r: std_logic_vector) return boolean is
+	-- 	 variable tmp : boolean;
+	--  begin
+	--  tmp := false;
+	--  if unsigned(r) = l then
+	-- 	tmp := true;
+	--  end if;
+	--  return tmp;
+	-- end "=";
+
+	--------------------------------------------------------------------------------------------------------
+	-- Operator: /=
+	--------------------------------------------------------------------------------------------------------
 	function "/=" (l:std_logic_vector; r: integer) return boolean is
     variable tmp : boolean;
   begin
-	 tmp := false;
-	 if unsigned(l) /= r then
-	 	tmp := true;
-	 end if;
-	 return tmp;
- end "/=";
+	  tmp := false;
+	  if unsigned(l) /= r then
+	 	  tmp := true;
+	  end if;
+	  return tmp;
+  end "/=";
 
- function "/=" (l:integer; r: std_logic_vector) return boolean is
+	function "/=" (l:integer; r: std_logic_vector) return boolean is
 		variable tmp : boolean;
 	begin
-	tmp := false;
-	if unsigned(r) /= l then
-	 tmp := true;
-	end if;
-	return tmp;
-end "/=";
+		tmp := false;
+		if unsigned(r) /= l then
+			tmp := true;
+		end if;
+		return tmp;
+	end "/=";
 
---  function "/=" (l:std_logic_vector; r: unsigned) return boolean is
--- 	 variable tmp : boolean;
---  begin
--- 	tmp := false;
--- 	if unsigned(l) /= r then
--- 	 tmp := true;
--- 	end if;
--- 	return tmp;
--- end "/=";
---
--- function "/=" (l:unsigned; r: std_logic_vector) return boolean is
--- 	 variable tmp : boolean;
---  begin
---  tmp := false;
---  if unsigned(r) /= l then
--- 	tmp := true;
---  end if;
---  return tmp;
--- end "/=";
+	--  function "/=" (l:std_logic_vector; r: unsigned) return boolean is
+	-- 	 variable tmp : boolean;
+	--  begin
+	-- 	tmp := false;
+	-- 	if unsigned(l) /= r then
+	-- 	 tmp := true;
+	-- 	end if;
+	-- 	return tmp;
+	-- end "/=";
+	--
+	-- function "/=" (l:unsigned; r: std_logic_vector) return boolean is
+	-- 	 variable tmp : boolean;
+	--  begin
+	--  tmp := false;
+	--  if unsigned(r) /= l then
+	-- 	tmp := true;
+	--  end if;
+	--  return tmp;
+	-- end "/=";
 
---------------------------------------------------------------------------------------------------------
--- Operator: >
---------------------------------------------------------------------------------------------------------
-function ">" (l:std_logic_vector; r: integer) return boolean is
-	variable tmp : boolean;
-begin
- tmp := false;
- if unsigned(l) > r then
-	tmp := true;
- end if;
- return tmp;
-end ">";
+	--------------------------------------------------------------------------------------------------------
+	-- Operator: >
+	--------------------------------------------------------------------------------------------------------
+	function ">" (l:std_logic_vector; r: integer) return boolean is
+		variable tmp : boolean;
+	begin
+	  tmp := false;
+	  if unsigned(l) > r then
+	  	tmp := true;
+	  end if;
+	  return tmp;
+	end ">";
 
-function ">" (l:integer; r: std_logic_vector) return boolean is
-	variable tmp : boolean;
-begin
-	tmp := false;
-	if l > unsigned(r) then
-	 tmp := true;
-	end if;
-	return tmp;
-end ">";
+	function ">" (l:integer; r: std_logic_vector) return boolean is
+		variable tmp : boolean;
+	begin
+		tmp := false;
+		if l > unsigned(r) then
+		 tmp := true;
+		end if;
+		return tmp;
+	end ">";
 
-function ">" (l:std_logic_vector; r: unsigned) return boolean is
+	function ">" (l:std_logic_vector; r: unsigned) return boolean is
+		 variable tmp : boolean;
+	begin
+		tmp := false;
+		if unsigned(l) > r then
+		 tmp := true;
+		end if;
+		return tmp;
+	end ">";
+
+	function ">" (l:unsigned; r: std_logic_vector) return boolean is
 	 variable tmp : boolean;
-begin
-	tmp := false;
-	if unsigned(l) > r then
-	 tmp := true;
-	end if;
-	return tmp;
-end ">";
+	begin
+		tmp := false;
+		if l > unsigned(r) then
+		tmp := true;
+		end if;
+		return tmp;
+	end ">";
 
-function ">" (l:unsigned; r: std_logic_vector) return boolean is
- variable tmp : boolean;
-begin
-	tmp := false;
-	if l > unsigned(r) then
-	tmp := true;
-	end if;
-	return tmp;
-end ">";
+	--------------------------------------------------------------------------------------------------------
+	-- Operator: <
+	--------------------------------------------------------------------------------------------------------
+	function "<" (l:std_logic_vector; r: integer) return boolean is
+		variable tmp : boolean;
+	begin
+	 tmp := false;
+	 if unsigned(l) < r then
+		tmp := true;
+	 end if;
+	 return tmp;
+	end "<";
 
---------------------------------------------------------------------------------------------------------
--- Operator: <
---------------------------------------------------------------------------------------------------------
-function "<" (l:std_logic_vector; r: integer) return boolean is
-	variable tmp : boolean;
-begin
- tmp := false;
- if unsigned(l) < r then
-	tmp := true;
- end if;
- return tmp;
-end "<";
+	function "<" (l:integer; r: std_logic_vector) return boolean is
+		variable tmp : boolean;
+	begin
+		tmp := false;
+		if l < unsigned(r) then
+		 tmp := true;
+		end if;
+		return tmp;
+	end "<";
 
-function "<" (l:integer; r: std_logic_vector) return boolean is
-	variable tmp : boolean;
-begin
-	tmp := false;
-	if l < unsigned(r) then
-	 tmp := true;
-	end if;
-	return tmp;
-end "<";
+	function "<" (l:std_logic_vector; r: unsigned) return boolean is
+	 variable tmp : boolean;
+	begin
+		tmp := false;
+		if unsigned(l) < r then
+		 tmp := true;
+		end if;
+		return tmp;
+	end "<";
 
-function "<" (l:std_logic_vector; r: unsigned) return boolean is
- variable tmp : boolean;
-begin
-	tmp := false;
-	if unsigned(l) < r then
-	 tmp := true;
-	end if;
-	return tmp;
-end "<";
+	function "<" (l:unsigned; r: std_logic_vector) return boolean is
+	 variable tmp : boolean;
+	begin
+		tmp := false;
+		if l < unsigned(r) then
+		tmp := true;
+		end if;
+		return tmp;
+	end "<";
 
-function "<" (l:unsigned; r: std_logic_vector) return boolean is
- variable tmp : boolean;
-begin
-	tmp := false;
-	if l < unsigned(r) then
-	tmp := true;
-	end if;
-	return tmp;
-end "<";
+	--------------------------------------------------------------------------------------------------------
+	-- Operator: >=
+	--------------------------------------------------------------------------------------------------------
+	function ">=" (l:std_logic_vector; r: integer) return boolean is
+		variable tmp : boolean;
+	begin
+	 tmp := false;
+	 if unsigned(l) >= r then
+		tmp := true;
+	 end if;
+	 return tmp;
+	end ">=";
 
---------------------------------------------------------------------------------------------------------
--- Operator: >=
---------------------------------------------------------------------------------------------------------
-function ">=" (l:std_logic_vector; r: integer) return boolean is
-	variable tmp : boolean;
-begin
- tmp := false;
- if unsigned(l) >= r then
-	tmp := true;
- end if;
- return tmp;
-end ">=";
+	function ">=" (l:integer; r: std_logic_vector) return boolean is
+		variable tmp : boolean;
+	begin
+		tmp := false;
+		if unsigned(r) >= l then
+		 tmp := true;
+		end if;
+		return tmp;
+	end ">=";
 
-function ">=" (l:integer; r: std_logic_vector) return boolean is
-	variable tmp : boolean;
-begin
-	tmp := false;
-	if unsigned(r) >= l then
-	 tmp := true;
-	end if;
-	return tmp;
-end ">=";
+	function ">=" (l:std_logic_vector; r: unsigned) return boolean is
+	 variable tmp : boolean;
+	begin
+		tmp := false;
+		if unsigned(l) >= r then
+		 tmp := true;
+		end if;
+		return tmp;
+	end ">=";
 
-function ">=" (l:std_logic_vector; r: unsigned) return boolean is
- variable tmp : boolean;
-begin
-	tmp := false;
-	if unsigned(l) >= r then
-	 tmp := true;
-	end if;
-	return tmp;
-end ">=";
+	function ">=" (l:unsigned; r: std_logic_vector) return boolean is
+	 variable tmp : boolean;
+	begin
+		tmp := false;
+		if unsigned(r) >= l then
+		tmp := true;
+		end if;
+		return tmp;
+	end ">=";
+	--------------------------------------------------------------------------------------------------------
+	-- Operator: <=
+	--------------------------------------------------------------------------------------------------------
+	function "<=" (l:std_logic_vector; r: integer) return boolean is
+		variable tmp : boolean;
+	begin
+	 tmp := false;
+	 if unsigned(l) <= r then
+		tmp := true;
+	 end if;
+	 return tmp;
+	end "<=";
 
-function ">=" (l:unsigned; r: std_logic_vector) return boolean is
- variable tmp : boolean;
-begin
-	tmp := false;
-	if unsigned(r) >= l then
-	tmp := true;
-	end if;
-	return tmp;
-end ">=";
---------------------------------------------------------------------------------------------------------
--- Operator: <=
---------------------------------------------------------------------------------------------------------
-function "<=" (l:std_logic_vector; r: integer) return boolean is
-	variable tmp : boolean;
-begin
- tmp := false;
- if unsigned(l) <= r then
-	tmp := true;
- end if;
- return tmp;
-end "<=";
+	function "<=" (l:integer; r: std_logic_vector) return boolean is
+		variable tmp : boolean;
+	begin
+		tmp := false;
+		if unsigned(r) <= l then
+		 tmp := true;
+		end if;
+		return tmp;
+	end "<=";
 
-function "<=" (l:integer; r: std_logic_vector) return boolean is
-	variable tmp : boolean;
-begin
-	tmp := false;
-	if unsigned(r) <= l then
-	 tmp := true;
-	end if;
-	return tmp;
-end "<=";
+	function "<=" (l:std_logic_vector; r: unsigned) return boolean is
+	 variable tmp : boolean;
+	begin
+		tmp := false;
+		if unsigned(l) <= r then
+		 tmp := true;
+		end if;
+		return tmp;
+	end "<=";
 
-function "<=" (l:std_logic_vector; r: unsigned) return boolean is
- variable tmp : boolean;
-begin
-	tmp := false;
-	if unsigned(l) <= r then
-	 tmp := true;
-	end if;
-	return tmp;
-end "<=";
+	function "<=" (l:unsigned; r: std_logic_vector) return boolean is
+	 variable tmp : boolean;
+	begin
+		tmp := false;
+		if unsigned(r) <= l then
+		tmp := true;
+		end if;
+		return tmp;
+	end "<=";
 
-function "<=" (l:unsigned; r: std_logic_vector) return boolean is
- variable tmp : boolean;
-begin
-	tmp := false;
-	if unsigned(r) <= l then
-	tmp := true;
-	end if;
-	return tmp;
-end "<=";
+	function size_of (input: integer) return integer is
+	begin
+		return integer(ceil(log2(real(input))));
+	end size_of;
 
-function size_for (input: integer) return integer is
-begin
-	return integer(ceil(log2(real(input))));
-end size_for;
+	function size_of (input : integer; word : integer) return integer is
+		variable tmp : real;
+	begin
+		--remember: log(a/b) = log(a) - log(b)
+		tmp := log2(real(input));
+		tmp := tmp - log2(real(word));
+		return integer(ceil(tmp));
+	end size_of;
+
+	function index_of (	input : std_logic_vector ) return integer is
+		variable tmp : integer;
+	begin
+		if input'low < input'high then
+			tmp := input'low / input'length;
+		else
+			tmp := input'high / input'length;
+		end if;
+
+		return tmp;
+	end index_of;
+
+	function rebase (	input : std_logic_vector ) return std_logic_vector is
+		variable tmp : std_logic_vector(input'length-1 downto 0);
+	begin
+		tmp := input;
+		return tmp;
+	end rebase;
+
+	--Returns a range of a vector on custom "range_t" type, as ranges are not VHDL objects.
+	function range_of (	input : integer; word : integer ) return range_t is
+		variable tmp : range_t;
+	begin
+		tmp.high := (input+1)*word-1;
+		tmp.low  := input*word;
+		return tmp;
+	end range_of;
+
+	function to_range (	input : std_logic_vector ) return range_t is
+		variable tmp : range_t;
+	begin
+		tmp.high := input'high;
+		tmp.low  := input'low;
+		return tmp;
+	end to_range;
+
 
 
 end std_logic_expert;
