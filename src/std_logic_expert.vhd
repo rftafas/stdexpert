@@ -43,6 +43,9 @@ package std_logic_expert is
     low   : integer;
   end record range_t;
 
+	type range_vector is array (NATURAL RANGE <>) of std_logic;
+
+
 	function to_integer         ( input : std_logic_vector       ) return integer;
 	function to_std_logic_vector( input : integer; size : integer) return std_logic_vector;
 	function to_std_logic_vector( input : std_logic              ) return std_logic_vector;
@@ -113,13 +116,20 @@ package std_logic_expert is
 	function "<=" (l:std_logic_vector; r: unsigned)         return boolean;
 	function "<=" (l:unsigned;         r: std_logic_vector) return boolean;
 
+	function "sll" (l:std_logic_vector; r: integer) return std_logic_vector;
+	function "sll" (l:std_logic_vector; r: unsigned) return std_logic_vector;
+	function "srl" (l:std_logic_vector; r: integer) return std_logic_vector;
+	function "srl" (l:std_logic_vector; r: unsigned) return std_logic_vector;
+
+
 	--index operations
-	function size_of  ( input : integer                          ) return integer;
-	function size_of  ( input : integer;          word : integer ) return integer;
-	function index_of (	input : std_logic_vector                 ) return integer;
-	function rebase   (	input : std_logic_vector                 ) return std_logic_vector;
-	function range_of (	input : integer;         	word : integer ) return range_t;
-	function to_range (	input : std_logic_vector                 ) return range_t;
+	function size_of    ( input : integer                          ) return integer;
+	function size_of    ( input : integer;          word : integer ) return integer;
+	function index_of   (	input : std_logic_vector                 ) return integer;
+	function rebase     (	input : std_logic_vector                 ) return std_logic_vector;
+	function range_of   (	input : integer;         	word : integer ) return range_t;
+	function to_range   (	input : std_logic_vector                 ) return range_t;
+	function index_of_1 (	input : std_logic_vector                 ) return integer;
 
 end std_logic_expert;
 
@@ -161,7 +171,7 @@ package body std_logic_expert is
   end to_std_logic_vector;
 
   -- --INTEGER TO UNSIGNED
-  -- function unsigned( input : integer; size : integer) return unsigned is
+  -- function to_unsigned( input : integer; size : integer) return unsigned is
     -- variable tmp : unsigned(size-1 downto 0);
   -- begin
 	-- assert size < 1
@@ -179,7 +189,7 @@ package body std_logic_expert is
   -- end unsigned;
 
   -- --INTEGER TO SIGNED
-  -- function signed( input : integer, size : integer) return signed is
+  -- function to_signed( input : integer, size : integer) return signed is
     -- variable tmp : unsigned(size-1 downto 0);
   -- begin
 	-- --contrato para size sempre maior que zero.
@@ -188,15 +198,6 @@ package body std_logic_expert is
     -- tmp := to_signed(input,size);
 	-- return tmp;
   -- end signed;
-
-  -- --INTEGER TO STD_LOGIC_VECTOR
-  -- function std_logic_vector( input : integer, size : integer) return std_logic_vector is
-    -- variable tmp : unsigned(size-1 downto 0);
-  -- begin
-	-- assert input >= 0 report "Only positives integer allowed when converting from INTEGER to STD_LOGIC_VECTOR." severity failure;
-    -- tmp := std_logic_vector(to_unsigned(input,size));
-	-- return tmp;
-  -- end std_logic_vector;
 
 --------------------------------------------------------------------------------------------------------
 -- Operator: +
@@ -684,6 +685,50 @@ package body std_logic_expert is
 		return tmp;
 	end "<=";
 
+	--------------------------------------------------------------------------------------------------------
+	-- Operator: <=
+	--------------------------------------------------------------------------------------------------------
+	function "sll" (l:std_logic_vector; r: integer) return std_logic_vector is
+		variable tmp : std_logic_vector(l'range);
+	begin
+		tmp := l;
+		for k in 0 to r-1 loop
+			tmp := tmp(tmp'high-1 downto 0) & '0';
+		end loop;
+		return tmp;
+	end "sll";
+
+	function "sll" (l:std_logic_vector; r: unsigned) return std_logic_vector is
+		variable tmp1 : integer;
+		variable tmp2 : std_logic_vector(l'range);
+	begin
+		tmp1 := to_integer(r);
+		tmp2 := l sll tmp1;
+		return tmp2;
+	end "sll";
+
+	function "srl" (l:std_logic_vector; r: integer) return std_logic_vector is
+		variable tmp : std_logic_vector(l'range);
+	begin
+		tmp := l;
+		for k in 0 to r-1 loop
+			tmp := '0' & tmp(tmp'high-1 downto 0);
+		end loop;
+		return tmp;
+	end "srl";
+
+	function "srl" (l:std_logic_vector; r: unsigned) return std_logic_vector is
+		variable tmp1 : integer;
+		variable tmp2 : std_logic_vector(l'range);
+	begin
+		tmp1 := to_integer(r);
+		tmp2 := l srl tmp1;
+		return tmp2;
+	end "srl";
+
+	--------------------------------------------------------------------------------------------------------
+	-- Operator: Index & Bus Operators
+	--------------------------------------------------------------------------------------------------------
 	function size_of (input: integer) return integer is
 	begin
 		return integer(ceil(log2(real(input))));
@@ -734,6 +779,15 @@ package body std_logic_expert is
 		return tmp;
 	end to_range;
 
-
+	function index_of_1 (	input : std_logic_vector ) return integer is
+		variable tmp : integer;
+	begin
+		for j in 0 to input'high loop
+			if input(j) = '1' then
+				tmp := j;
+			end if;
+		end loop;
+		return tmp;
+	end index_of_1;
 
 end std_logic_expert;

@@ -38,12 +38,22 @@ library IEEE;
 	use IEEE.math_real.all;
 
 package std_logic_galois is
-	-- generic(
-	-- 	field_order     : integer := 8;
-	--   field_generator : std_logic_vector(field_order downto 0) := (others=>'0')
-	-- );
-  constant field_generator : std_logic_vector(8 downto 0) := (8=>'1', 4=>'1', 3=>'1', 2=>'1', 0=>'1', others=>'0');
-	constant field_order     : integer := 8;
+	-------------------------------------------------------------------------------------------------------
+	--READ THIS IF YOU GOT SYNTAX ERRORS:
+	--
+	--Manufacturers still do not support generics on packages for simulation.
+	--
+	--If you need to use VIVADO_SIM, for example, comment the "Generic" field below and
+	--uncomment the two constants afterwards. The annoying part of it is having to copy this repo
+	--on every project and to edit it. My recommendation is to simulate and go back to generic format
+	--when it is working as intended.
+	-------------------------------------------------------------------------------------------------------
+	generic (
+	 	field_order     : integer := 8;
+		field_generator : std_logic_vector(field_order downto 0) := (others=>'0')
+	);
+  --constant field_generator : std_logic_vector(8 downto 0) := (8=>'1', 4=>'1', 3=>'1', 2=>'1', 0=>'1', others=>'0');
+	--constant field_order     : integer := 8;
 
 	--these function return the order of any polynome. we will need this to create a galois type.
 	function get_order ( input : std_logic_vector ) return integer;
