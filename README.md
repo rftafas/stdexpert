@@ -12,7 +12,8 @@ ALL STD_LOGIC_VECTORS are considered UNSIGNED. If SIGNED operation is needed, du
 RANGE_T: record that includes "low" and "high" fields. Used to expand the ranges on VHDL.
 
 USE:
-signal|variable myrange : range_t := ( high => <integer>, low => <integer> );
+
+    signal|variable myrange : range_t := ( high => <integer>, low => <integer> );
   
 ### Type CASTs
 
