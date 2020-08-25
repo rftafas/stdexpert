@@ -126,7 +126,7 @@ package std_logic_expert is
 	function "rrl" (l:std_logic_vector; r: integer ) return std_logic_vector;
 	function "rrl" (l:std_logic_vector; r: unsigned) return std_logic_vector;
   function "rrl" (l:integer_array;    r: integer ) return integer_array;
-	
+
 	--index operations
 	function size_of    ( input : integer                          ) return integer;
 	function size_of    ( input : integer;          word : integer ) return integer;
@@ -724,7 +724,7 @@ package body std_logic_expert is
 		variable tmp2 : std_logic_vector(l'range);
 	begin
 		tmp1 := to_integer(r);
-		tmp2 := l sla tmp1;
+		tmp2 := l rll tmp1;
 		return tmp2;
 	end "rll";
 
@@ -753,7 +753,7 @@ package body std_logic_expert is
 		variable tmp2 : std_logic_vector(l'range);
 	begin
 		tmp1 := to_integer(r);
-		tmp2 := l srl tmp1;
+		tmp2 := l rrl tmp1;
 		return tmp2;
 	end "rrl";
 
@@ -762,7 +762,7 @@ package body std_logic_expert is
   begin
     tmp := l;
     for j in 1 to r loop
-      tmp <= tmp(0) & tmp(tmp'high downto 1);
+      tmp <= tmp(tmp'low) & tmp(tmp'high downto 1);
     end loop;
     return tmp;
   end "rrl";
