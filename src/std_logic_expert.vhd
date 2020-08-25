@@ -121,6 +121,8 @@ package std_logic_expert is
 	--STD_LOGIC_EXPERT assumes STD_LOGIC as UNSIGNED, always. no need for SLA or SRA.
 	function "rll" (l:std_logic_vector; r: integer ) return std_logic_vector;
 	function "rll" (l:std_logic_vector; r: unsigned) return std_logic_vector;
+	function "rll" (l:integer_array;    r: integer ) return integer_array;
+
 	function "rrl" (l:std_logic_vector; r: integer ) return std_logic_vector;
 	function "rrl" (l:std_logic_vector; r: unsigned) return std_logic_vector;
 
@@ -724,6 +726,17 @@ package body std_logic_expert is
 		tmp2 := l sla tmp1;
 		return tmp2;
 	end "rll";
+
+	function "rll" (l:integer_array; r: integer) return integer_array is
+    tmp : integer_array;
+  begin
+    tmp := l;
+    for j in 1 to r loop
+      tmp <= tmp(tmp'high-1 downto 0) & tmp'high;
+    end loop;
+    return tmp;
+
+  end "rll";
 
 	function "rrl" (l:std_logic_vector; r: integer) return std_logic_vector is
 		variable tmp : std_logic_vector(l'length-1 downto 0);
