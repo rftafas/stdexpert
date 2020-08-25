@@ -125,7 +125,8 @@ package std_logic_expert is
 
 	function "rrl" (l:std_logic_vector; r: integer ) return std_logic_vector;
 	function "rrl" (l:std_logic_vector; r: unsigned) return std_logic_vector;
-
+  function "rrl" (l:integer_array;    r: integer ) return integer_array;
+	
 	--index operations
 	function size_of    ( input : integer                          ) return integer;
 	function size_of    ( input : integer;          word : integer ) return integer;
@@ -732,10 +733,9 @@ package body std_logic_expert is
   begin
     tmp := l;
     for j in 1 to r loop
-      tmp <= tmp(tmp'high-1 downto 0) & tmp'high;
+      tmp <= tmp(tmp'high-1 downto 0) & tmp(tmp'high);
     end loop;
     return tmp;
-
   end "rll";
 
 	function "rrl" (l:std_logic_vector; r: integer) return std_logic_vector is
@@ -756,6 +756,16 @@ package body std_logic_expert is
 		tmp2 := l srl tmp1;
 		return tmp2;
 	end "rrl";
+
+	function "rrl" (l:integer_array; r: integer) return integer_array is
+    tmp : integer_array;
+  begin
+    tmp := l;
+    for j in 1 to r loop
+      tmp <= tmp(0) & tmp(tmp'high downto 1);
+    end loop;
+    return tmp;
+  end "rrl";
 
 	--------------------------------------------------------------------------------------------------------
 	-- Operator: Index & Bus Operators
