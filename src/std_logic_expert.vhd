@@ -118,14 +118,14 @@ package std_logic_expert is
 
 	--Shift operators
 	--SLL and SLL are present on standard libraries.
-	--STD_LOGIC_EXPERT assumes STD_LOGIC as UNSIGNED, always. no need for SLA or SRA.
-	function "rll" (l:std_logic_vector; r: integer ) return std_logic_vector;
-	function "rll" (l:std_logic_vector; r: unsigned) return std_logic_vector;
-	function "rll" (l:integer_array;    r: integer ) return integer_array;
+	--ROL and ROR.
+	function "rol" (l:std_logic_vector; r: integer ) return std_logic_vector;
+	function "rol" (l:std_logic_vector; r: unsigned) return std_logic_vector;
+	function "rol" (l:integer_vector;    r: integer ) return integer_vector;
 
-	function "rrl" (l:std_logic_vector; r: integer ) return std_logic_vector;
-	function "rrl" (l:std_logic_vector; r: unsigned) return std_logic_vector;
-  function "rrl" (l:integer_array;    r: integer ) return integer_array;
+	function "ror" (l:std_logic_vector; r: integer ) return std_logic_vector;
+	function "ror" (l:std_logic_vector; r: unsigned) return std_logic_vector;
+  function "ror" (l:integer_vector;    r: integer ) return integer_vector;
 
 	--index operations
 	function size_of    ( input : integer                          ) return integer;
@@ -709,7 +709,7 @@ package body std_logic_expert is
 	--------------------------------------------------------------------------------------------------------
 	-- Operator: SLA / SRA
 	--------------------------------------------------------------------------------------------------------
-	function "rll" (l:std_logic_vector; r: integer) return std_logic_vector is
+	function "rol" (l:std_logic_vector; r: integer) return std_logic_vector is
 		variable tmp : std_logic_vector(l'length-1 downto 0);
 	begin
 		tmp := l;
@@ -717,28 +717,28 @@ package body std_logic_expert is
 			tmp := tmp(tmp'high-1 downto 0) & tmp(tmp'high);
 		end loop;
 		return tmp;
-	end "rll";
+	end "rol";
 
-	function "rll" (l:std_logic_vector; r: unsigned) return std_logic_vector is
+	function "rol" (l:std_logic_vector; r: unsigned) return std_logic_vector is
 		variable tmp1 : integer;
 		variable tmp2 : std_logic_vector(l'range);
 	begin
 		tmp1 := to_integer(r);
-		tmp2 := l rll tmp1;
+		tmp2 := l rol tmp1;
 		return tmp2;
-	end "rll";
+	end "rol";
 
-	function "rll" (l:integer_array; r: integer) return integer_array is
-    tmp : integer_array;
+	function "rol" (l:integer_vector; r: integer) return integer_vector is
+    variable tmp : integer_vector(l'range);
   begin
     tmp := l;
     for j in 1 to r loop
-      tmp <= tmp(tmp'high-1 downto 0) & tmp(tmp'high);
+      tmp := tmp(tmp'high-1 downto 0) & tmp(tmp'high);
     end loop;
     return tmp;
-  end "rll";
+  end "rol";
 
-	function "rrl" (l:std_logic_vector; r: integer) return std_logic_vector is
+	function "ror" (l:std_logic_vector; r: integer) return std_logic_vector is
 		variable tmp : std_logic_vector(l'length-1 downto 0);
 	begin
 		tmp := l;
@@ -746,26 +746,26 @@ package body std_logic_expert is
 			tmp := tmp(tmp'low) & tmp(tmp'high downto 1);
 		end loop;
 		return tmp;
-	end "rrl";
+	end "ror";
 
-	function "rrl" (l:std_logic_vector; r: unsigned) return std_logic_vector is
+	function "ror" (l:std_logic_vector; r: unsigned) return std_logic_vector is
 		variable tmp1 : integer;
 		variable tmp2 : std_logic_vector(l'range);
 	begin
 		tmp1 := to_integer(r);
-		tmp2 := l rrl tmp1;
+		tmp2 := l ror tmp1;
 		return tmp2;
-	end "rrl";
+	end "ror";
 
-	function "rrl" (l:integer_array; r: integer) return integer_array is
-    tmp : integer_array;
+	function "ror" (l:integer_vector; r: integer) return integer_vector is
+    variable tmp : integer_vector(l'range);
   begin
     tmp := l;
     for j in 1 to r loop
-      tmp <= tmp(tmp'low) & tmp(tmp'high downto 1);
+      tmp := tmp(tmp'low) & tmp(tmp'high downto 1);
     end loop;
     return tmp;
-  end "rrl";
+  end "ror";
 
 	--------------------------------------------------------------------------------------------------------
 	-- Operator: Index & Bus Operators
@@ -829,7 +829,7 @@ package body std_logic_expert is
 			else
 				tmp(tmp2) := '0';
 			end if;
-			tmp2 := tmp2+1;
+			tmp2 := tmp2 + 1;
 		end loop;
 
 		return tmp;
