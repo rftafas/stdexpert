@@ -44,7 +44,7 @@ package std_logic_expert is
   end record range_t;
 
 	type range_vector is array (NATURAL RANGE <>) of std_logic;
-
+	type vector_array is array (NATURAL RANGE <>) of std_logic_vector;
 
 	function to_integer         ( input : std_logic_vector       ) return integer;
 	function to_std_logic_vector( input : integer; size : integer) return std_logic_vector;
