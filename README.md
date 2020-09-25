@@ -35,7 +35,7 @@ It covers following operators:
 ||UNSIGNED|STD_LOGIC_VECTOR|STD_LOGIC_VECTOR|
 |> , < , >= , <= , = , /= |STD_LOGIC_VECTOR|INTEGER|BOOLEAN|Comparator operator|
 ||INTEGER|STD_LOGIC_VECTOR|BOOLEAN|
-|rrl , rll |STD_LOGIC_VECTOR|STD_LOGIC_VECTOR|STD_LOGIC_VECTOR|Rotation, getting the bit and placing back to begining.|
+|rol , ror |STD_LOGIC_VECTOR|STD_LOGIC_VECTOR|STD_LOGIC_VECTOR|Rotation, getting the bit and placing back to begining.|
 
 ## Functions
 
