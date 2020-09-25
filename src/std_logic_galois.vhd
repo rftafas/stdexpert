@@ -1,6 +1,19 @@
--- this library supports ONLY GF(2^m). It does not support any other prime. Yes, of course it
--- can be adapted for it.
---
+----------------------------------------------------------------------------------
+--Copyright 2020 Ricardo F Tafas Jr
+
+--Licensed under the Apache License, Version 2.0 (the "License"); you may not
+--use this file except in compliance with the License. You may obtain a copy of
+--the License at
+
+--   http://www.apache.org/licenses/LICENSE-2.0
+
+--Unless required by applicable law or agreed to in writing, software distributed
+--under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+--OR CONDITIONS OF ANY KIND, either express or implied. See the License for
+--the specific language governing permissions and limitations under the License.
+----------------------------------------------------------------------------------
+-- this library supports ONLY GF(2^m). It does not support any other prime.
+-- Yes, of course it can be adapted for it. But... Er... Why?
 --
 --USAGE:
 -- must declare desider field. from there, we calculate the Galois word size,
@@ -12,25 +25,18 @@
 --
 --
 --library expert;
---  package std_logic_galois_8 is new expert.std_logic_galois
+--  package expert.std_logic_galois_8 is new expert.std_logic_galois
 --      generic map (
 --          size => 8,
 --          field_generator(8 downto 0) => (8=>'1', 4=>'1', 3=>'1', 1=>'1', 0=>'1', others=>'0')
 --      );
---  use work.std_logic_galois_8.all -- it must be work.
+--  use expert..std_logic_galois_8.all -- it must be work.
 --
 -- then you can use signals. Galois vector are composed by a field and a value. declare it like:
 --
 -- signal galois_number : galois_vector;
---
---and attribute it like this:
---
---galois_number.value <= x"AB";
---galois_number.field <= (8=>'1', 4=>'1', 3=>'1', 1=>'1', 0=>'1', others=>'0');
---
---or one can operate it with + and *
---
---galois_product <= galois_factor1 * galois_factor2;
+-- ...
+-- galois_product <= galois_factor1 * galois_factor2;
 --------------------------------------------------------------------------------------------------------------
 library IEEE;
 	use IEEE.std_logic_1164.all;
@@ -46,14 +52,14 @@ package std_logic_galois is
 	--If you need to use VIVADO_SIM, for example, comment the "Generic" field below and
 	--uncomment the two constants afterwards. The annoying part of it is having to copy this repo
 	--on every project and to edit it. My recommendation is to simulate and go back to generic format
-	--when it is working as intended.
+	--when it is working as intended. Vivado Synthesis is ok, the problem is vivado_sim.
 	-------------------------------------------------------------------------------------------------------
 	generic (
 	 	field_order     : integer := 8;
 		field_generator : std_logic_vector(field_order downto 0) := (others=>'0')
 	);
-  --constant field_generator : std_logic_vector(8 downto 0) := (8=>'1', 4=>'1', 3=>'1', 2=>'1', 0=>'1', others=>'0');
 	--constant field_order     : integer := 8;
+  --constant field_generator : std_logic_vector(field_order downto 0) := (8=>'1', 4=>'1', 3=>'1', 2=>'1', 0=>'1', others=>'0');
 
 	--these function return the order of any polynome. we will need this to create a galois type.
 	function get_order ( input : std_logic_vector ) return integer;
@@ -63,8 +69,8 @@ package std_logic_galois is
 	--with the order, we create a galois type. Galois operation on galois type are automatic.
 	type galois_vector   is array (field_order-1 downto 0) of std_logic;
 	type galois_polynome is array (NATURAL RANGE <>) of galois_vector;
-	--type galois_pipe     is array (NATURAL RANGE <>) of galois_polynome;
-	type galois_pipe     is array (6 downto 0) of galois_polynome(6 downto 0);
+	type galois_pipe     is array (NATURAL RANGE <>) of galois_polynome;
+	--type galois_pipe     is array (6 downto 0) of galois_polynome(6 downto 0);
 
 	--function that generates the field roots.
 	function field_roots_func          return galois_polynome;
@@ -658,42 +664,6 @@ package body std_logic_galois is
 		return tmp;
 	end part_div;
 
-	procedure pipeline_mult ( signal l: in galois_vector; signal r: in galois_vector; result : out galois_vector; signal reg : inout std_logic_vector ) is
-	begin
-		reg    <= galois_mult(l,r);
-		result := galois_reduce(reg);
-	end pipeline_mult;
-
-	--usage:
-	-- to make reminder = poly1 mod poly2 do:
-	-- note the signal below. in the future, when Xilinx supports array of array we may ue it;
-	-- for now, we suffer. declare as below.
-	-- signal poly1_pipe : galois_polynome(poly1'length ** 2 -1 downto 0);
-	--
-	--process(clk)
-	--begin
-	--	if rising_edge(clk)
-	--		pipeline_mod(poly1,poly2,reminder,poly1_pipe)
-	-- end if;
-	--end process;
-  --
-	-- and that is all folks. it has the same number of steps as POLY1 has elements
-	-- if poly1 is (7 downto 0), pipeline will have 8 steps.
-	--
-	procedure pipeline_mod ( signal l: in galois_polynome; signal r: in galois_polynome; result : out galois_polynome; signal reg : inout galois_pipe ) is
-		variable r_order : integer;
-	begin
-
-		for j in reg'range loop
-			if j = 0 then
-				reg(0) <= l;
-			else
-				reg(j) <= part_div(reg(j-1),r);
-			end if;
-		end loop;
-		result := reg(reg'high);
-	end pipeline_mod;
-
 	function field_roots_func return galois_polynome is
 		variable tmp : galois_polynome(2**field_order-2 downto 0);
 	begin
@@ -726,5 +696,45 @@ package body std_logic_galois is
 		end loop;
 		return tmp;
 	end root_locator;
+
+---------------------------------------------------------------------------------------------------------
+--PIPELINED OPERATIONS
+---------------------------------------------------------------------------------------------------------
+
+	procedure pipeline_mult ( signal l: in galois_vector; signal r: in galois_vector; result : out galois_vector; signal reg : std_logic_vector ) is
+	begin
+		reg(0)    <= galois_mult(l,r);
+		result := galois_reduce(reg(0));
+	end pipeline_mult;
+
+	--usage:
+	-- to make reminder = poly1 mod poly2 do:
+	-- note the signal below. in the future, when Xilinx supports array of array we may ue it;
+	-- for now, we suffer. declare as below.
+	-- signal poly1_pipe : galois_polynome(poly1'length ** 2 -1 downto 0);
+	--
+	--process(clk)
+	--begin
+	--	if rising_edge(clk)
+	--		pipeline_mod(poly1,poly2,reminder,poly1_pipe)
+	-- end if;
+	--end process;
+	--
+	-- and that is all folks. it has the same number of steps as POLY1 has elements
+	-- if poly1 is (7 downto 0), pipeline will have 8 steps.
+	--
+	procedure pipeline_mod ( signal l: in galois_polynome; signal r: in galois_polynome; result : out galois_polynome; signal reg : inout galois_pipe ) is
+		variable r_order : integer;
+	begin
+
+		for j in reg'range loop
+			if j = 0 then
+				reg(0) <= l;
+			else
+				reg(j) <= part_div(reg(j-1),r);
+			end if;
+		end loop;
+		result := reg(reg'high);
+	end pipeline_mod;
 
 end std_logic_galois;

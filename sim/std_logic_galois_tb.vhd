@@ -1,30 +1,24 @@
 ----------------------------------------------------------------------------------
--- Company:
--- Engineer:
---
--- Create Date: 13.01.2020 15:54:30
--- Design Name:
--- Module Name: test_galois - Behavioral
--- Project Name:
--- Target Devices:
--- Tool Versions:
--- Description:
---
--- Dependencies:
---
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
---
+--Copyright 2020 Ricardo F Tafas Jr
+
+--Licensed under the Apache License, Version 2.0 (the "License"); you may not
+--use this file except in compliance with the License. You may obtain a copy of
+--the License at
+
+--   http://www.apache.org/licenses/LICENSE-2.0
+
+--Unless required by applicable law or agreed to in writing, software distributed
+--under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+--OR CONDITIONS OF ANY KIND, either express or implied. See the License for
+--the specific language governing permissions and limitations under the License.
 ----------------------------------------------------------------------------------
-library expert;
---  package std_logic_galois_8 is new expert.std_logic_galois
---      generic map (
---          field_order     => 8,
---          polynome_vector => "100011011"--( 8=>'1', 4=>'1', 3=>'1', 1=>'1', 0=>'1', others=>'0' ) --"100011011"
---      );
---  use work.std_logic_galois_8.all;
-  use expert.std_logic_galois.all;
+library stdexpert;
+  package std_logic_galois_8 is new work.std_logic_galois
+      generic map (
+          field_order     => 8,
+          polynome_vector => "100011011"--( 8=>'1', 4=>'1', 3=>'1', 1=>'1', 0=>'1', others=>'0' ) --"100011011"
+      );
+  use work.std_logic_galois_8.all; --work here means "current library".
   use expert.std_logic_expert.all;
 library IEEE;
   use IEEE.STD_LOGIC_1164.ALL;
@@ -34,10 +28,10 @@ library stdblocks;
   use stdblocks.ram_lib.all;
   use stdblocks.fifo_lib.all;
 
-entity test_galois is
-end test_galois;
+entity std_logic_galois_tb is
+end std_logic_galois_tb;
 
-architecture Behavioral of test_galois is
+architecture behavioral of std_logic_galois_tb is
 
     --testing something on library.
     constant test_field_roots : galois_polynome(field_roots'range) := field_roots;
@@ -107,6 +101,7 @@ architecture Behavioral of test_galois is
         cons_2t => to_galois_vector(1),
         others => to_galois_vector(0)
     );
+
     constant x_t_poly  : galois_polynome(cons_t downto 0) := (
         cons_t => to_galois_vector(1),
         others => (others=>'0')
@@ -119,8 +114,6 @@ architecture Behavioral of test_galois is
         to_galois_vector(msg_tmp(0))
     );
 
-
-
     signal msg_to_tx  : galois_polynome(cons_n-1 downto 0) := (others=>(others=>'0'));
     signal error_poly : galois_polynome(cons_n-1 downto 0) := (
         cons_n-1 => to_galois_vector(1),
@@ -128,7 +121,6 @@ architecture Behavioral of test_galois is
         others   => (others=>'0')
     );
     signal msg_err     : galois_polynome(cons_n-1 downto 0) := (others=>(others=>'0'));
-
 
     --poly for the syndromes. it is n-k in size.
     --signal syndrome : galois_polynome(cons_n - cons_k - 1 downto 0);
@@ -252,8 +244,8 @@ begin
         --also for Forney get omega.
         omega_poly  <= ( syndrome * lambda_poly ) mod x_2t_poly;
         wait for 10 ns;
-        
-        --then we create the 
+
+        --then we create the
         evaluator_poly <= omega_poly / lambda_dx_poly;
         wait for 10 ns;
 
@@ -290,6 +282,10 @@ begin
         --then we add. if everything is ok, hopefully the message is the same.
         msg_fixed <= msg_err + fix_poly(msg_err'range);
         wait for 10 ns;
+
+        assert msg_fixed = msg_to_tx
+          report "Test Fail.";
+          severity failure;
 
         wait;
     end process;

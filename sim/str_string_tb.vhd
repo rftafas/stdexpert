@@ -1,19 +1,23 @@
+----------------------------------------------------------------------------------
+--Copyright 2020 Ricardo F Tafas Jr
 
-use std.textio.all;
+--Licensed under the Apache License, Version 2.0 (the "License"); you may not
+--use this file except in compliance with the License. You may obtain a copy of
+--the License at
+
+--   http://www.apache.org/licenses/LICENSE-2.0
+
+--Unless required by applicable law or agreed to in writing, software distributed
+--under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+--OR CONDITIONS OF ANY KIND, either express or implied. See the License for
+--the specific language governing permissions and limitations under the License.
+----------------------------------------------------------------------------------
 library ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
-
--- Could use 'vunit_lib.vunit_context', however, this is a VHDL 2008 construct
--- whereas this library should ideally support 93, 2002 and 2008. Also, to
--- reduce the likelihood of errors when VUnit is updated, we're using a subset
--- of vunit_context containing only the required packages
 library expert;
     use expert.std_string.all;
 
-------------------------
--- Entity declaration --
-------------------------
 entity std_string_tb is
 end entity;
 
