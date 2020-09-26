@@ -25,6 +25,8 @@ package std_logic_gray is
 	function to_gray_vector ( input : unsigned       	  ) return  gray_vector;
 	function to_gray_vector ( input : integer; size : integer) return gray_vector;
 
+	function create_gray_vector ( input : std_logic_vector) return gray_vector;
+
 	--COMVERSIONS FROM GRAY
 	function to_std_logic_vector ( input : gray_vector ) return std_logic_vector;
 	function to_unsigned         ( input : gray_vector ) return unsigned;
@@ -52,9 +54,10 @@ package std_logic_gray is
 	function ">="  (l:gray_vector; r: gray_vector) return boolean;
 	function "<="  (l:gray_vector; r: gray_vector) return boolean;
 
-	--INTERNAL FUNCTIONS. NOT INTENDED TO BE USED DIRECTLY
 	function gray_encoder   ( input : std_logic_vector ) return  std_logic_vector;
 	function gray_decoder   ( input : std_logic_vector ) return  std_logic_vector;
+
+	--INTERNAL FUNCTIONS. NOT INTENDED TO BE USED DIRECTLY
 	function translate2gray ( input : std_logic_vector ) return  gray_vector;
 	function translate2svl  ( input : gray_vector	   ) return  std_logic_vector;
 
@@ -64,14 +67,15 @@ end std_logic_gray;
 package body std_logic_gray is
 
 	function to_gray_vector ( input : std_logic_vector ) return  gray_vector is
-		variable tmp : std_logic_vector(input'range);
+		variable tmp : std_logic_vector(input'length-1 downto 0);
 	begin
+		tmp := input;
 		tmp := gray_encoder(tmp);
 		return translate2gray(tmp);
 	end to_gray_vector;
 
 	function to_gray_vector ( input : unsigned       	) return  gray_vector is
-		variable tmp : std_logic_vector(input'range);
+		variable tmp : std_logic_vector(input'length-1 downto 0);
 	begin
 		tmp := std_logic_vector(input);
 		tmp := gray_encoder(tmp);
@@ -109,6 +113,13 @@ package body std_logic_gray is
 		tmp := gray_decoder(tmp);
 		return to_integer(unsigned(tmp));
 	end to_integer;
+
+	function create_gray_vector ( input : std_logic_vector) return gray_vector is
+		--this stub is here to comply with expert library.
+	begin
+		return translate2gray(input);
+	end create_gray_vector;
+
 
 	function "+" (l:gray_vector; r: gray_vector        ) return gray_vector is
 		variable tmp : gray_vector(l'range);

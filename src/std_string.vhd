@@ -39,6 +39,8 @@ package std_string is
 	--Operadores
 	function string_replace(l:string; r:string) return string;
 	function string_match  (l:string; r:string) return boolean;
+	function string_length (l:string) 					return integer;
+
 	--TO DO: must overload this with all other string types. There will be pain.
 
 	--function get_char_code (input:character) return integer;
@@ -67,7 +69,7 @@ package body std_string is
 		str_tmp1 := l;
 		str_tmp2 := r;
 
-		scan_loop : for j in str_tmp1'high downto 2 loop
+		scan_loop : for j in str_tmp1'high downto 1 loop
 			if ignore then
 				ignore := false;
 			elsif str_tmp1(j) = '\' then
@@ -86,7 +88,10 @@ package body std_string is
 		end loop;
 
 		if pointer = 0 then
-			report "Could not find %r on string.";
+			out_tmp := (others=>nul);
+			assert true;
+				report "Could not find %r on string."
+				severity failure;
 		elsif pointer = 1 then
 			out_tmp(out_tmp'high-2 downto 1) := str_tmp1(str_tmp1'high downto 3) & r;
 		elsif pointer = str_tmp1'high-1 then
@@ -111,6 +116,12 @@ package body std_string is
 		end loop;
 		return match;
 	end string_match;
+
+	function string_length (l:string) 					return integer is
+	begin
+		return l'length;
+	end string_length;
+
 
 --	function get_char_code (input:character) return integer is
 --		variable tmp : integer := 0;

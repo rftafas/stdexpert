@@ -43,10 +43,6 @@ architecture simulation of std_logic_expert_tb is
 
 begin
 
-	assert TOP_svl + ONE_svl = ZERO_svl
-		report "Error on + operator between 2 std_logic"
-		severity failure;
-
 		main : process
 			variable range_v     : range_t;
 			variable tmp_svl1    : std_logic_vector(7 downto 0) := x"05";
@@ -150,7 +146,6 @@ begin
 					tmp_int1 := to_integer( (tmp_svl1+1) rem tmp_svl1 );
 					check_equal(tmp_int1,1,result("std_logic_vector rem std_logic_vector"));
 
-
 				elsif run("Testing '='") then
 					check_true(tmp_svl1 = 5, result("std_logic_vector = integer"));
 					check_false(tmp_svl1 = 6, result("std_logic_vector = integer."));
@@ -164,6 +159,20 @@ begin
 					check_false(to_std_logic_vector(6,8) = tmp_svl1, result("std_logic_vector = std_logic_vector."));
 					check_true( tmp_svl1 = tmp_svl1, result("std_logic_vector = std_logic_vector."));
 					check_false( (tmp_svl1+1) = tmp_svl1, result("std_logic_vector = std_logic_vector."));
+
+				elsif run("Testing '/='") then
+					check_true(tmp_svl1 /= 6, result("std_logic_vector /= integer"));
+					check_false(tmp_svl1 /= 5, result("std_logic_vector /= integer."));
+					check_true( 6 /= tmp_svl1, result("integer /= std_logic_vector."));
+					check_false(5 /= tmp_svl1, result("integer /= std_logic_vector."));
+					check_true( tmp_svl1 /= to_unsigned(6,8), result("std_logic_vector /= unsigned."));
+					check_false(tmp_svl1 /= to_unsigned(5,8), result("std_logic_vector /= unsigned."));
+					check_true( to_unsigned(6,8) /= tmp_svl1, result("unsigned /= std_logic_vector."));
+					check_false(to_unsigned(5,8) /= tmp_svl1, result("unsigned /= std_logic_vector."));
+					check_true( to_std_logic_vector(6,8) /= tmp_svl1, result("std_logic_vector /= std_logic_vector."));
+					check_false(to_std_logic_vector(5,8) /= tmp_svl1, result("std_logic_vector /= std_logic_vector."));
+					check_true( (tmp_svl1+1) /= tmp_svl1, result("std_logic_vector /= std_logic_vector."));
+					check_false( tmp_svl1 /= tmp_svl1, result("std_logic_vector /= std_logic_vector."));
 
 				elsif run("Testing '>'") then
 					check_true(tmp_svl1 > 4, result("std_logic_vector > integer"));
@@ -189,8 +198,30 @@ begin
 					check_true( to_std_logic_vector(4,8) < tmp_svl1, result("std_logic_vector < std_logic_vector."));
 					check_false(to_std_logic_vector(6,8) < tmp_svl1, result("std_logic_vector < std_logic_vector."));
 
-				--elsif run("Testing '>='") then
-				--elsif run("Testing '<='") then
+				elsif run("Testing '<='") then
+					check_true(tmp_svl1 <= 5, result("std_logic_vector <= integer"));
+					check_false(tmp_svl1 <= 4, result("std_logic_vector <= integer."));
+					check_true( 5 <= tmp_svl1, result("integer <= std_logic_vector."));
+					check_false(6 <= tmp_svl1, result("integer <= std_logic_vector."));
+					check_true( tmp_svl1 <= to_unsigned(5,8), result("std_logic_vector <= unsigned."));
+					check_false(tmp_svl1 <= to_unsigned(4,8), result("std_logic_vector <= unsigned."));
+					check_true( to_unsigned(5,8) <= tmp_svl1, result("unsigned <= std_logic_vector."));
+					check_false(to_unsigned(6,8) <= tmp_svl1, result("unsigned <= std_logic_vector."));
+					check_true( to_std_logic_vector(5,8) <= tmp_svl1, result("std_logic_vector <= std_logic_vector."));
+					check_false(to_std_logic_vector(6,8) <= tmp_svl1, result("std_logic_vector <= std_logic_vector."));
+
+				elsif run("Testing '>='") then
+					check_true(tmp_svl1 >= 5, result("std_logic_vector >= integer"));
+					check_false(tmp_svl1 >= 6, result("std_logic_vector >= integer."));
+					check_true( 5 >= tmp_svl1, result("integer >= std_logic_vector."));
+					check_false(4 >= tmp_svl1, result("integer >= std_logic_vector."));
+					check_true( tmp_svl1 >= to_unsigned(5,8), result("std_logic_vector >= unsigned."));
+					check_false(tmp_svl1 >= to_unsigned(6,8), result("std_logic_vector >= unsigned."));
+					check_true( to_unsigned(5,8) >= tmp_svl1, result("unsigned >= std_logic_vector."));
+					check_false(to_unsigned(4,8) >= tmp_svl1, result("unsigned >= std_logic_vector."));
+					check_true( to_std_logic_vector(5,8) >= tmp_svl1, result("std_logic_vector >= std_logic_vector."));
+					check_false(to_std_logic_vector(4,8) >= tmp_svl1, result("std_logic_vector >= std_logic_vector."));
+
 				elsif run("Testing 'rol'") then
 					check_equal( (tmp_svl1 rol to_std_logic_vector(4,8)), ( tmp_svl1(3 downto 0) & tmp_svl1(7 downto 4) ) ,result("integer rol std_logic_vector"));
 					check_equal( (tmp_svl1 rol to_unsigned(4,8)), ( tmp_svl1(3 downto 0) & tmp_svl1(7 downto 4) ) ,result("integer rol std_logic_vector"));

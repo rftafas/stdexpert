@@ -649,85 +649,45 @@ package body std_logic_expert is
 	-- Operator: >=
 	--------------------------------------------------------------------------------------------------------
 	function ">=" (l:std_logic_vector; r: integer) return boolean is
-		variable tmp : boolean;
 	begin
-	 tmp := false;
-	 if unsigned(l) >= r then
-		tmp := true;
-	 end if;
-	 return tmp;
+	 return to_integer(l) >= r;
 	end ">=";
 
 	function ">=" (l:integer; r: std_logic_vector) return boolean is
-		variable tmp : boolean;
 	begin
-		tmp := false;
-		if unsigned(r) >= l then
-		 tmp := true;
-		end if;
-		return tmp;
+		return l >= to_integer(r);
 	end ">=";
 
 	function ">=" (l:std_logic_vector; r: unsigned) return boolean is
-	 variable tmp : boolean;
 	begin
-		tmp := false;
-		if unsigned(l) >= r then
-		 tmp := true;
-		end if;
-		return tmp;
+		return to_integer(l) >= to_integer(r);
 	end ">=";
 
 	function ">=" (l:unsigned; r: std_logic_vector) return boolean is
-	 variable tmp : boolean;
 	begin
-		tmp := false;
-		if unsigned(r) >= l then
-		tmp := true;
-		end if;
-		return tmp;
+		return to_integer(l) >= to_integer(r);
 	end ">=";
 	--------------------------------------------------------------------------------------------------------
 	-- Operator: <=
 	--------------------------------------------------------------------------------------------------------
 	function "<=" (l:std_logic_vector; r: integer) return boolean is
-		variable tmp : boolean;
 	begin
-	 tmp := false;
-	 if unsigned(l) <= r then
-		tmp := true;
-	 end if;
-	 return tmp;
+	 return to_integer(l) <= r;
 	end "<=";
 
 	function "<=" (l:integer; r: std_logic_vector) return boolean is
-		variable tmp : boolean;
 	begin
-		tmp := false;
-		if unsigned(r) <= l then
-		 tmp := true;
-		end if;
-		return tmp;
+		return l <= to_integer(r);
 	end "<=";
 
 	function "<=" (l:std_logic_vector; r: unsigned) return boolean is
-	 variable tmp : boolean;
 	begin
-		tmp := false;
-		if unsigned(l) <= r then
-		 tmp := true;
-		end if;
-		return tmp;
+		return to_integer(l) <= to_integer(r);
 	end "<=";
 
 	function "<=" (l:unsigned; r: std_logic_vector) return boolean is
-	 variable tmp : boolean;
 	begin
-		tmp := false;
-		if unsigned(r) <= l then
-		tmp := true;
-		end if;
-		return tmp;
+		return to_integer(l) <= to_integer(r);
 	end "<=";
 
 	--------------------------------------------------------------------------------------------------------
