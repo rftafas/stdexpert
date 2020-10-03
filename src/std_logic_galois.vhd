@@ -136,9 +136,6 @@ package std_logic_galois is
 	function evaluate      ( input : galois_polynome; x_input : galois_vector) return galois_vector;
 	function root_locator  ( input : galois_polynome ) return galois_polynome;
 
-	--procedure pipeline_mult (l: in galois_polynome; r: in galois_polynome; result : out galois_polynome; signal tmp : inout std_logic_vector );
-	procedure pipeline_mod ( signal l: in galois_polynome; signal r: in galois_polynome; result : out galois_polynome; signal reg : inout galois_pipe );
-
 	--some important internal constants.
 	constant b_integer   : integer := 2**field_order-2;
 
@@ -571,13 +568,14 @@ package body std_logic_galois is
 
 
   function "sll"  (l:galois_polynome; r: integer) return galois_polynome is
-		variable tmp : galois_polynome;
+		variable tmp : galois_polynome(l'length-1 downto 0);
 	begin
-		if (r > 0) and (l'length > 1) then
-			tmp(l'high downto r) := tmp(l'high-r downto 0);
-			tmp(r-1 downto 0)    := (others=>(others=>'0'));
-		else
-			tmp := l;
+		tmp := l;
+		if (r > 0) and (tmp'length > 1) then
+			for j in r downto 0 loop
+				tmp(l'high downto 1) := tmp(l'high-1 downto 0);
+				tmp(0)               := (others=>'0');
+			end loop;
 		end if;
 		return tmp;
 	end "sll";
@@ -696,45 +694,5 @@ package body std_logic_galois is
 		end loop;
 		return tmp;
 	end root_locator;
-
----------------------------------------------------------------------------------------------------------
---PIPELINED OPERATIONS
----------------------------------------------------------------------------------------------------------
-
-	procedure pipeline_mult ( signal l: in galois_vector; signal r: in galois_vector; result : out galois_vector; signal reg : std_logic_vector ) is
-	begin
-		reg(0)    <= galois_mult(l,r);
-		result := galois_reduce(reg(0));
-	end pipeline_mult;
-
-	--usage:
-	-- to make reminder = poly1 mod poly2 do:
-	-- note the signal below. in the future, when Xilinx supports array of array we may ue it;
-	-- for now, we suffer. declare as below.
-	-- signal poly1_pipe : galois_polynome(poly1'length ** 2 -1 downto 0);
-	--
-	--process(clk)
-	--begin
-	--	if rising_edge(clk)
-	--		pipeline_mod(poly1,poly2,reminder,poly1_pipe)
-	-- end if;
-	--end process;
-	--
-	-- and that is all folks. it has the same number of steps as POLY1 has elements
-	-- if poly1 is (7 downto 0), pipeline will have 8 steps.
-	--
-	procedure pipeline_mod ( signal l: in galois_polynome; signal r: in galois_polynome; result : out galois_polynome; signal reg : inout galois_pipe ) is
-		variable r_order : integer;
-	begin
-
-		for j in reg'range loop
-			if j = 0 then
-				reg(0) <= l;
-			else
-				reg(j) <= part_div(reg(j-1),r);
-			end if;
-		end loop;
-		result := reg(reg'high);
-	end pipeline_mod;
 
 end std_logic_galois;
