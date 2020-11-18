@@ -284,7 +284,7 @@ begin
         wait for 10 ns;
 
         assert msg_fixed = msg_to_tx
-          report "Test Fail.";
+          report "Test Fail."
           severity failure;
 
         wait;
