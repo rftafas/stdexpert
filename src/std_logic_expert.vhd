@@ -44,11 +44,13 @@ package std_logic_expert is
   end record range_t;
 
 	type range_vector is array (NATURAL RANGE <>) of std_logic;
-	type vector_array is array (NATURAL RANGE <>) of std_logic_vector;
+	type std_logic_array is array (NATURAL RANGE <>) of std_logic_vector;
 
 	--Use this function whenever you get overload problems. Overload problems also
 	--plague numeric_std. If one wants to create a vector and just it and add to mathematical
 	--functions or comparators, it is best to specify what king of constant is being created.
+	--NOTE: of course, one can use prefixes, but not all tools are found of them.
+	--prefix usage example: if data = std_logic_vector'("0011001100") then
 	function create_std_logic_vector ( input : std_logic_vector ) return std_logic_vector;
 	function create_unsigned         ( input : std_logic_vector ) return unsigned;
 	function create_signed           ( input : std_logic_vector ) return signed;
