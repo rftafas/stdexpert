@@ -37,9 +37,10 @@ package std_string is
 
 
 	--Operadores
-	function string_replace(l:string; r:string) return string;
-	function string_match  (l:string; r:string) return boolean;
-	function string_length (l:string) 					return integer;
+	function string_replace(l:string; r:string)  return string;
+	function string_match  (l:string; r:string)  return boolean;
+	function string_length (l:string) 					 return integer;
+	function string_padding(l:string; r:positive)return string;
 
 	--TO DO: must overload this with all other string types. There will be pain.
 
@@ -122,6 +123,15 @@ package body std_string is
 		return l'length;
 	end string_length;
 
+	function string_padding(l:string; r:positive) return string is
+		variable tmp : string(r-1 downto 0) := (others=>nul);
+	begin
+		assert l'length < r
+			report "Input larger than result size."
+			severity failure;
+		tmp(l'length-1 downto 0) := l;
+		return tmp;
+	end string_padding;
 
 --	function get_char_code (input:character) return integer is
 --		variable tmp : integer := 0;
