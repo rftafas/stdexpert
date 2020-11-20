@@ -76,8 +76,8 @@ package std_logic_galois is
 	function field_roots_func          return galois_polynome;
 	function field_inverted_roots_func return galois_polynome;
 	--constant to be used with field roots.
-	constant field_roots     : galois_polynome(2**field_order-2 downto 0) := field_roots_func;
-	constant field_inv_roots : galois_polynome(2**field_order-2 downto 0) := field_inverted_roots_func;
+	constant field_roots     : galois_polynome(2**field_order-2 downto 0);
+	constant field_inv_roots : galois_polynome(2**field_order-2 downto 0);
 
 	--function to_galois_vector ( input : galois_value;     field : to_galois_vector ) return galois_vector;
 	function to_galois_vector ( input : std_logic_vector ) return galois_vector;
@@ -694,5 +694,9 @@ package body std_logic_galois is
 		end loop;
 		return tmp;
 	end root_locator;
+
+	constant field_roots     : galois_polynome(2**field_order-2 downto 0) := field_roots_func;
+	constant field_inv_roots : galois_polynome(2**field_order-2 downto 0) := field_inverted_roots_func;
+
 
 end std_logic_galois;
