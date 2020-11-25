@@ -71,6 +71,12 @@ begin
       elsif run("string_match(source,keyword)") then
         check_true(string_match("pass","This test must pass"), result("string_replace(original_string,replace term)"));
         check_false(string_match("pass","This test must fail"), result("string_replace(original_string,replace term)"));
+
+      elsif run("string_padding(source,size)") then
+        text_v := (others=>nul);
+        text_v(2 downto 1) := "ab";
+        check_true(string_padding("ab",256) = text_v, result("string_padding(string,size)"));
+
       end if;
 
     end loop;

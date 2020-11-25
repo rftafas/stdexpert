@@ -871,7 +871,7 @@ package body std_logic_expert is
 	end to_range;
 
 	function index_of_1 (	input : std_logic_vector ) return integer is
-		variable tmp : integer;
+		variable tmp : integer := 0;
 	begin
 		for j in 0 to input'high loop
 			if input(j) = '1' then

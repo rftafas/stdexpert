@@ -124,12 +124,12 @@ package body std_string is
 	end string_length;
 
 	function string_padding(l:string; r:positive) return string is
-		variable tmp : string(r-1 downto 0) := (others=>nul);
+		variable tmp : string(1 to r) := (others=>nul);
 	begin
 		assert l'length < r
 			report "Input larger than result size."
 			severity failure;
-		tmp(l'length-1 downto 0) := l;
+		tmp(r-l'length+1 to r) := l;
 		return tmp;
 	end string_padding;
 
