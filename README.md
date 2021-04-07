@@ -45,7 +45,7 @@ It covers following operators:
 |index_of|index_of(vector)|Return the relative position of that register inside a larger register. (i.e. for byte, the byte number of that slice)|
 |rebase|rebase(vector)|Returns an std_logic_vector starting with 0 and little endian.|
 |range_of|range_of(vector)|Returns a range_t containing vector'high and vector'low|
-|get_slice|get_slice(vector,<word_size>,<index>)|Returns a smaller vector (size of word_size) a portion of input vector corresponding to a word number (example: byte0 is 7..0, byte1 is 15..8)|
+|get_slice|get_slice(vector,word_size,index)|Returns a smaller vector (size of word_size) a portion of input vector corresponding to a word number (example: byte0 is 7..0, byte1 is 15..8)|
 |set_slice|set_slice(vector,word,index)|Retruns a vector replacing a portion of vector corresponding to a word number (example: byte0 is 7..0, byte1 is 15..8). Works best ir size_of(vector) is a multiple of size_of(word)|
 |to_range|to_range(vector)|Returns a range_t containing vector'high and vector'low|. Same of range_of (present to comply with other typecasts)
 |index_of_1|index_of_1(vector)|Returns the index of highest '1' bit.|
