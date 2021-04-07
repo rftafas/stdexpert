@@ -15,6 +15,13 @@ USE:
 
     signal|variable myrange : range_t := ( high => <integer>, low => <integer> );
   
+  
+STD_LOGIC_ARRAY: An unconstrained array of unconstrained std_logic_vector. Some tools take a problem with it.
+
+USE:
+
+    signal|variable myarray : std_logic_array(y downto 0)(x downto 0) := ( 0 => <vector0>, 1 => <vector1>, others => <vector> );
+  
 ### Type CASTs
 
 |Function|Input Types|
