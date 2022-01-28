@@ -30,13 +30,21 @@
 --          size => 8,
 --          field_generator(8 downto 0) => (8=>'1', 4=>'1', 3=>'1', 1=>'1', 0=>'1', others=>'0')
 --      );
---  use expert..std_logic_galois_8.all -- it must be work.
+--  use expert.std_logic_galois_8.all -- it must be work.
 --
 -- then you can use signals. Galois vector are composed by a field and a value. declare it like:
 --
 -- signal galois_number : galois_vector;
 -- ...
 -- galois_product <= galois_factor1 * galois_factor2;
+--------------------------------------------------------------------------------------------------------------
+-- USAGE WARNING:
+--------------------------------------------------------------------------------------------------------------
+-- Several operations on this library generate an unfeasible amount of hardware, so only small
+-- vectors are usable with this direct operations. The aim for this is to provide some initial
+-- approach to error correction. One can later replace the huge hardware operations with
+-- more friendly coubterparts. Also, one can resort to VHLS by the same autor to keep it more
+-- resource friendly.
 --------------------------------------------------------------------------------------------------------------
 library IEEE;
 	use IEEE.std_logic_1164.all;
@@ -59,7 +67,7 @@ package std_logic_galois is
 		field_generator : std_logic_vector(field_order downto 0) := (others=>'0')
 	);
 	--constant field_order     : integer := 8;
-  --constant field_generator : std_logic_vector(field_order downto 0) := (8=>'1', 4=>'1', 3=>'1', 2=>'1', 0=>'1', others=>'0');
+  	--constant field_generator : std_logic_vector(field_order downto 0) := (8=>'1', 4=>'1', 3=>'1', 2=>'1', 0=>'1', others=>'0');
 
 	--these function return the order of any polynome. we will need this to create a galois type.
 	function get_order ( input : std_logic_vector ) return integer;
@@ -316,7 +324,6 @@ package body std_logic_galois is
 	function "*" (l:galois_polynome; r: galois_polynome        ) return galois_polynome is
 		variable tmp : galois_polynome( l'high + r'high downto 0 ) := (others=>(others=>'0'));
 	begin
-	  --primeiro a multiplicação
 	  for j in l'range loop
 	    for k in r'range loop
 	        tmp(j+k) := tmp(j+k) + ( l(j) * r(k) );
@@ -329,7 +336,6 @@ package body std_logic_galois is
 	function "*" (l:galois_polynome; r: galois_vector        ) return galois_polynome is
 		variable tmp : galois_polynome(l'range ) := (others=>(others=>'0'));
 	begin
-	  --primeiro a multiplicação
 	  for j in l'range loop
         tmp(j) := l(j) * r;
 	  end loop;
@@ -361,13 +367,12 @@ package body std_logic_galois is
 		variable r_order : integer;
 		variable l_order : integer;
 	begin
-		--depois a redução.
 		tmp := l;
 		r_order := get_order(r);
 		l_order := get_order(l);
 		for j in l'high downto 0 loop
 			if j < r_order then
-				--we do nothing.
+				null; --this is intentional.
 			elsif tmp(j) > to_galois_vector(0) then
 				result(j-r_order) := tmp(j) * galois_inv(r(r_order));
 				for k in 1 to r_order loop
@@ -379,7 +384,6 @@ package body std_logic_galois is
 		return result;
 
 	end "/";
-
 
 	function "**"  (l:galois_vector; r: integer        ) return galois_vector is
 		variable tmp     : galois_vector           := to_galois_vector(1);
@@ -406,8 +410,6 @@ package body std_logic_galois is
 	function "**"  (l:galois_vector; r: unsigned        ) return galois_vector is
 		variable tmp     : galois_vector           := to_galois_vector(1);
 	begin
-		--this is dangerous and will generate huge unfeasible hardware
-		--(as for 2020, like dividers in 2010. Maybe this comment will be laughable in 2030)
 		for j in 0 to to_integer(r) loop
 			tmp := tmp * l;
 		end loop;
@@ -442,7 +444,6 @@ package body std_logic_galois is
 		variable r_order : integer;
 		variable l_order : integer;
 	begin
-		--depois a redução.
 		tmp := l;
 		r_order := get_order(r);
 		l_order := get_order(l);
@@ -467,7 +468,6 @@ package body std_logic_galois is
 		variable r_order : integer;
 		variable l_order : integer;
 	begin
-		--depois a redução.
 		tmp := l;
 		r_order := get_order(r);
 		l_order := get_order(l);
@@ -643,7 +643,6 @@ package body std_logic_galois is
 		variable r_order : integer;
 		variable l_order : integer;
 	begin
-		--depois a redução.
 		tmp := l;
 		r_order := get_order(r);
 		l_order := get_order(l);
