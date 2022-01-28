@@ -37,11 +37,10 @@ library IEEE;
 
 package std_logic_expert is
 
-	-- Outputs from the FIFO.
-  type range_t is record
-    high  : integer;
-    low   : integer;
-  end record range_t;
+	type range_t is record
+		high  : integer;
+		low   : integer;
+	end record range_t;
 
 	type range_vector is array (NATURAL RANGE <>) of std_logic;
 	type std_logic_array is array (NATURAL RANGE <>) of std_logic_vector;
@@ -137,13 +136,13 @@ package std_logic_expert is
 	function "ror" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector;
 	function "ror" (l:std_logic_vector; r: unsigned) return std_logic_vector;
 	function "ror" (l:integer_vector;   r:  integer) return integer_vector;
-  function "ror" (l:integer_vector;   r: unsigned) return integer_vector;
+  	function "ror" (l:integer_vector;   r: unsigned) return integer_vector;
 
 	--index operations
 	function size_of    ( input : integer                          ) return integer;
 	function size_of    ( input : integer;          word : integer ) return integer;
-	function index_of   (	input : std_logic_vector                 ) return integer;
-	function range_of   (	input : integer;         	word : integer ) return range_t;
+	function index_of   ( input : std_logic_vector                 ) return integer;
+	function range_of   ( input : integer;         	word : integer ) return range_t;
 
 	function get_slice  (
 		input : std_logic_vector;
@@ -165,24 +164,23 @@ package std_logic_expert is
 
 end std_logic_expert;
 
---a arquitetura
 package body std_logic_expert is
 
 	----------------------------------------------------------------------------------------------
-  --CREATES STD_LOGIC_VECTOR CONSTANTS TO LET NO DOUBTS DUE TO OVERLOADING.
-  function create_std_logic_vector( input : std_logic_vector) return std_logic_vector is
-    variable tmp : std_logic_vector(input'length-1 downto 0);
-  begin
-    tmp := input;
+  	--CREATES STD_LOGIC_VECTOR CONSTANTS TO LET NO DOUBTS DUE TO OVERLOADING.
+	function create_std_logic_vector( input : std_logic_vector) return std_logic_vector is
+		variable tmp : std_logic_vector(input'length-1 downto 0);
+	begin
+		tmp := input;
 		return tmp;
-  end create_std_logic_vector;
+	end create_std_logic_vector;
 
 	function create_unsigned( input : std_logic_vector) return unsigned is
-    variable tmp : unsigned(input'length-1 downto 0);
-  begin
-    tmp := unsigned(input);
+		variable tmp : unsigned(input'length-1 downto 0);
+	begin
+		tmp := unsigned(input);
 		return tmp;
-  end create_unsigned;
+	end create_unsigned;
 
 	function create_signed( input : std_logic_vector) return signed is
 		variable tmp : signed(input'length-1 downto 0);
@@ -191,18 +189,18 @@ package body std_logic_expert is
 		return tmp;
 	end create_signed;
 	----------------------------------------------------------------------------------------------
-  --TO INTEGER
-  function to_integer( input : std_logic_vector) return integer is
-    variable tmp : integer;
-  begin
-    tmp := to_integer(unsigned(input));
+	--TO INTEGER
+	function to_integer( input : std_logic_vector) return integer is
+		variable tmp : integer;
+	begin
+		tmp := to_integer(unsigned(input));
 		return tmp;
-  end to_integer;
+	end to_integer;
 
-  --TO STD_LOGIC_VECTOR
+  	--TO STD_LOGIC_VECTOR
 	function to_std_logic_vector( input : integer; size : integer) return std_logic_vector is
 		variable tmp : std_logic_vector(size-1 downto 0);
-  begin
+  	begin
 		assert size > 0
 			report "Vector size on conversion must be greater than 0."
 			severity failure;
@@ -213,77 +211,77 @@ package body std_logic_expert is
 			report "Only positives integer allowed when converting from INTEGER to STD_LOGIC_VECTOR."
 			severity failure;
 	--contrato para o input não ser maior que 2**size-1
-    tmp := std_logic_vector(to_unsigned(input,size));
+    	tmp := std_logic_vector(to_unsigned(input,size));
 		return tmp;
-  end to_std_logic_vector;
+  	end to_std_logic_vector;
 
 	function to_std_logic_vector( input : unsigned ) return std_logic_vector is
 		variable tmp : std_logic_vector(input'length-1 downto 0);
-  begin
-    tmp := std_logic_vector(input);
+	begin
+		tmp := std_logic_vector(input);
 		return tmp;
-  end to_std_logic_vector;
+	end to_std_logic_vector;
 
 	function to_std_logic_vector( input : std_logic ) return std_logic_vector is
-    variable tmp : std_logic_vector(0 downto 0);
-  begin
-    tmp(0) := input;
-		return tmp;
-  end to_std_logic_vector;
+		variable tmp : std_logic_vector(0 downto 0);
+	begin
+		tmp(0) := input;
+			return tmp;
+	end to_std_logic_vector;
 
   -- INTEGER TO UNSIGNED
-  function to_unsigned( input : std_logic_vector) return unsigned is
-    variable tmp : unsigned(input'length-1 downto 0);
-  begin
-    tmp := unsigned(input);
-		return tmp;
-  end to_unsigned;
+	function to_unsigned( input : std_logic_vector) return unsigned is
+		variable tmp : unsigned(input'length-1 downto 0);
+	begin
+		tmp := unsigned(input);
+			return tmp;
+	end to_unsigned;
 
-  function to_signed( input : std_logic_vector) return signed is
-  	variable tmp : signed(input'length-1 downto 0);
-  begin
-    tmp := signed(input);
-		return tmp;
-  end to_signed;
+	function to_signed( input : std_logic_vector) return signed is
+		variable tmp : signed(input'length-1 downto 0);
+	begin
+		tmp := signed(input);
+			return tmp;
+	end to_signed;
 
 --------------------------------------------------------------------------------------------------------
 -- Operator: +
 --------------------------------------------------------------------------------------------------------
-  function "+" (l:std_logic_vector; r: unsigned        ) return std_logic_vector is
+	function "+" (l:std_logic_vector; r: unsigned        ) return std_logic_vector is
 		variable tmp : std_logic_vector(l'range);
-  begin
-  	report "Result of adding vector is 1 bit wider." severity note;
+	begin
+		report "Result of adding vector is 1 bit wider." severity note;
 		tmp := std_logic_vector(unsigned(l)+r);
 		return tmp;
-  end "+";
+	end "+";
 
-  function "+" (l:unsigned;         r: std_logic_vector) return unsigned is
-  	variable tmp : unsigned(l'range);
-  begin
+	function "+" (l:unsigned;         r: std_logic_vector) return unsigned is
+		variable tmp : unsigned(l'range);
+	begin
 		tmp := l + unsigned(r);
 		return tmp;
-  end "+";
+	end "+";
 
-   function "+" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector is
-  	 variable tmp : std_logic_vector(l'range);
-   begin
-		 tmp := std_logic_vector(unsigned(l)+unsigned(r));
-		 return tmp;
-   end "+";
+	function "+" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector is
+		variable tmp : std_logic_vector(l'range);
+	begin
+		tmp := std_logic_vector(unsigned(l)+unsigned(r));
+		return tmp;
+	end "+";
 
-  function "+" (l:std_logic_vector; r: integer         ) return std_logic_vector is
-  	variable tmp : std_logic_vector(l'range);
-  begin
+	function "+" (l:std_logic_vector; r: integer         ) return std_logic_vector is
+		variable tmp : std_logic_vector(l'range);
+	begin
 		tmp := std_logic_vector(unsigned(l) + to_unsigned(r,l'length));
 		return tmp;
-  end "+";
+	end "+";
 
-  function "+" (l:integer         ; r: std_logic_vector) return integer is
-  	variable tmp : integer;
-  begin
+	function "+" (l:integer         ; r: std_logic_vector) return integer is
+		variable tmp : integer;
+	begin
 		tmp := l + to_integer(unsigned(r));
 		return tmp;
-  end "+";
+	end "+";
 
 --------------------------------------------------------------------------------------------------------
 -- Operator: -
@@ -326,7 +324,7 @@ package body std_logic_expert is
 --------------------------------------------------------------------------------------------------------
 -- Operator: *
 --------------------------------------------------------------------------------------------------------
-  function "*" (l:std_logic_vector; r: unsigned        ) return std_logic_vector is
+  	function "*" (l:std_logic_vector; r: unsigned        ) return std_logic_vector is
 		variable tmp : std_logic_vector(l'length + r'length - 1 downto 0);
 	begin
 	 tmp := std_logic_vector(unsigned(l) * r);
@@ -340,64 +338,64 @@ package body std_logic_expert is
 		return tmp;
 	end "*";
 
-  function "*" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector is
-    variable tmp : std_logic_vector(l'length + r'length - 1 downto 0);
-  begin
-	 tmp := std_logic_vector(unsigned(l) * unsigned(r));
-	 return tmp;
-  end "*";
+	function "*" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector is
+		variable tmp : std_logic_vector(l'length + r'length - 1 downto 0);
+	begin
+		tmp := std_logic_vector(unsigned(l) * unsigned(r));
+		return tmp;
+	end "*";
 
-  function "*" (l:std_logic_vector; r: integer         ) return std_logic_vector is
-    variable tmp : std_logic_vector(2 * l'length - 1 downto 0);
-  begin
-	 tmp := std_logic_vector(unsigned(l) * to_unsigned(r,l'length));
-	 return tmp;
-  end "*";
+	function "*" (l:std_logic_vector; r: integer         ) return std_logic_vector is
+		variable tmp : std_logic_vector(2 * l'length - 1 downto 0);
+	begin
+		tmp := std_logic_vector(unsigned(l) * to_unsigned(r,l'length));
+		return tmp;
+	end "*";
 
-  function "*" (l:integer         ; r: std_logic_vector) return integer is
-    variable tmp : integer;
-  begin
-	 tmp := l * to_integer(unsigned(r));
-	 return tmp;
-  end "*";
+	function "*" (l:integer         ; r: std_logic_vector) return integer is
+		variable tmp : integer;
+	begin
+		tmp := l * to_integer(unsigned(r));
+		return tmp;
+	end "*";
 
 --------------------------------------------------------------------------------------------------------
 -- Operator: /
 --------------------------------------------------------------------------------------------------------
-  function "/" (l:std_logic_vector; r: unsigned        ) return std_logic_vector is
-  	variable tmp : std_logic_vector(l'range);
-  begin
+	function "/" (l:std_logic_vector; r: unsigned        ) return std_logic_vector is
+		variable tmp : std_logic_vector(l'range);
+	begin
 		tmp := std_logic_vector(unsigned(l)/r);
 		return tmp;
-  end "/";
+	end "/";
 
-  function "/" (l:unsigned;         r: std_logic_vector) return unsigned is
-  	variable tmp : unsigned(l'range);
-  begin
+	function "/" (l:unsigned;         r: std_logic_vector) return unsigned is
+		variable tmp : unsigned(l'range);
+	begin
 		tmp := l/unsigned(r);
 		return tmp;
-  end "/";
+	end "/";
 
-   function "/" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector is
-  	 variable tmp : std_logic_vector(l'range);
-   begin
-		 tmp := std_logic_vector(unsigned(l)/unsigned(r));
-		 return tmp;
-   end "/";
+	function "/" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector is
+		variable tmp : std_logic_vector(l'range);
+	begin
+		tmp := std_logic_vector(unsigned(l)/unsigned(r));
+		return tmp;
+	end "/";
 
-  function "/" (l:std_logic_vector; r: integer         ) return std_logic_vector is
-  	variable tmp : std_logic_vector(l'range);
-  begin
+	function "/" (l:std_logic_vector; r: integer         ) return std_logic_vector is
+		variable tmp : std_logic_vector(l'range);
+	begin
 		tmp := std_logic_vector(unsigned(l)/to_unsigned(r,l'length));
 		return tmp;
-  end "/";
+	end "/";
 
-  function "/" (l:integer         ; r: std_logic_vector) return integer is
-  	variable tmp : integer;
-  begin
-	tmp := l/to_integer(unsigned(r));
-	return tmp;
-  end "/";
+	function "/" (l:integer         ; r: std_logic_vector) return integer is
+		variable tmp : integer;
+	begin
+		tmp := l/to_integer(unsigned(r));
+		return tmp;
+	end "/";
 
 --------------------------------------------------------------------------------------------------------
 -- Operator: mod
@@ -440,40 +438,40 @@ package body std_logic_expert is
 --------------------------------------------------------------------------------------------------------
 -- Operator: rem
 --------------------------------------------------------------------------------------------------------
-		function "rem" (l:std_logic_vector; r: unsigned        ) return std_logic_vector is
-			variable tmp : std_logic_vector(l'range);
-		begin
-			tmp := std_logic_vector(unsigned(l) rem r);
-			return tmp;
-		end "rem";
+	function "rem" (l:std_logic_vector; r: unsigned        ) return std_logic_vector is
+		variable tmp : std_logic_vector(l'range);
+	begin
+		tmp := std_logic_vector(unsigned(l) rem r);
+		return tmp;
+	end "rem";
 
-		function "rem" (l:unsigned;         r: std_logic_vector) return unsigned is
-			variable tmp : unsigned(l'range);
-		begin
-			tmp := l rem unsigned(r);
-			return tmp;
-		end "rem";
+	function "rem" (l:unsigned;         r: std_logic_vector) return unsigned is
+		variable tmp : unsigned(l'range);
+	begin
+		tmp := l rem unsigned(r);
+		return tmp;
+	end "rem";
 
-		function "rem" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector is
-			variable tmp : std_logic_vector(l'range);
-		begin
-			tmp := std_logic_vector(unsigned(l) rem unsigned(r));
-			return tmp;
-		end "rem";
+	function "rem" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector is
+		variable tmp : std_logic_vector(l'range);
+	begin
+		tmp := std_logic_vector(unsigned(l) rem unsigned(r));
+		return tmp;
+	end "rem";
 
-		function "rem" (l:std_logic_vector; r: integer         ) return std_logic_vector is
-			variable tmp : std_logic_vector(l'range);
-		begin
-			tmp := std_logic_vector(unsigned(l) rem to_unsigned(r,l'length));
-			return tmp;
-		end "rem";
+	function "rem" (l:std_logic_vector; r: integer         ) return std_logic_vector is
+		variable tmp : std_logic_vector(l'range);
+	begin
+		tmp := std_logic_vector(unsigned(l) rem to_unsigned(r,l'length));
+		return tmp;
+	end "rem";
 
-		function "rem" (l:integer         ; r: std_logic_vector) return integer is
-			variable tmp : integer;
-		begin
-			tmp := l rem to_integer(unsigned(r));
-			return tmp;
-		end "rem";
+	function "rem" (l:integer         ; r: std_logic_vector) return integer is
+		variable tmp : integer;
+	begin
+		tmp := l rem to_integer(unsigned(r));
+		return tmp;
+	end "rem";
 
 --------------------------------------------------------------------------------------------------------
 -- Operator: =
@@ -500,36 +498,36 @@ package body std_logic_expert is
 
 	function "=" (l:std_logic_vector; r: unsigned) return boolean is
 	 	 variable tmp : boolean;
-	  begin
-	 	tmp := false;
-	 	if unsigned(l) = r then
-	 	 tmp := true;
-	 	end if;
-	 	return tmp;
-	 end "=";
-
-	function "=" (l:unsigned; r: std_logic_vector) return boolean is
-		 variable tmp : boolean;
-	 begin
-	 tmp := false;
-	 if unsigned(r) = l then
-		tmp := true;
-	 end if;
-	 return tmp;
+	begin
+		tmp := false;
+		if unsigned(l) = r then
+			tmp := true;
+		end if;
+		return tmp;
 	end "=";
 
-	--------------------------------------------------------------------------------------------------------
-	-- Operator: /=
-	--------------------------------------------------------------------------------------------------------
+	function "=" (l:unsigned; r: std_logic_vector) return boolean is
+		variable tmp : boolean;
+	begin
+		tmp := false;
+		if unsigned(r) = l then
+			tmp := true;
+		end if;
+		return tmp;
+	end "=";
+
+--------------------------------------------------------------------------------------------------------
+-- Operator: /=
+--------------------------------------------------------------------------------------------------------
 	function "/=" (l:std_logic_vector; r: integer) return boolean is
-    variable tmp : boolean;
-  begin
-	  tmp := false;
-	  if unsigned(l) /= r then
-	 	  tmp := true;
-	  end if;
-	  return tmp;
-  end "/=";
+		variable tmp : boolean;
+	begin
+		tmp := false;
+		if unsigned(l) /= r then
+			tmp := true;
+		end if;
+		return tmp;
+	end "/=";
 
 	function "/=" (l:integer; r: std_logic_vector) return boolean is
 		variable tmp : boolean;
@@ -541,37 +539,37 @@ package body std_logic_expert is
 		return tmp;
 	end "/=";
 
-	 function "/=" (l:std_logic_vector; r: unsigned) return boolean is
-		 variable tmp : boolean;
-	 begin
+	function "/=" (l:std_logic_vector; r: unsigned) return boolean is
+		variable tmp : boolean;
+	begin
 		tmp := false;
 		if unsigned(l) /= r then
-		 tmp := true;
+			tmp := true;
 		end if;
 		return tmp;
 	end "/=";
 
 	function "/=" (l:unsigned; r: std_logic_vector) return boolean is
 		 variable tmp : boolean;
-	 begin
-	 tmp := false;
-	 if unsigned(r) /= l then
-		tmp := true;
-	 end if;
-	 return tmp;
+	begin
+		tmp := false;
+		if unsigned(r) /= l then
+			tmp := true;
+		end if;
+		return tmp;
 	end "/=";
 
-	--------------------------------------------------------------------------------------------------------
-	-- Operator: >
-	--------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------
+-- Operator: >
+--------------------------------------------------------------------------------------------------------
 	function ">" (l:std_logic_vector; r: integer) return boolean is
 		variable tmp : boolean;
 	begin
-	  tmp := false;
-	  if unsigned(l) > r then
-	  	tmp := true;
-	  end if;
-	  return tmp;
+		tmp := false;
+		if unsigned(l) > r then
+			tmp := true;
+		end if;
+		return tmp;
 	end ">";
 
 	function ">" (l:integer; r: std_logic_vector) return boolean is
@@ -579,34 +577,34 @@ package body std_logic_expert is
 	begin
 		tmp := false;
 		if l > unsigned(r) then
-		 tmp := true;
+		 	tmp := true;
 		end if;
 		return tmp;
 	end ">";
 
 	function ">" (l:std_logic_vector; r: unsigned) return boolean is
-		 variable tmp : boolean;
+		variable tmp : boolean;
 	begin
 		tmp := false;
 		if unsigned(l) > r then
-		 tmp := true;
+		 	tmp := true;
 		end if;
 		return tmp;
 	end ">";
 
 	function ">" (l:unsigned; r: std_logic_vector) return boolean is
-	 variable tmp : boolean;
+	 	variable tmp : boolean;
 	begin
 		tmp := false;
 		if l > unsigned(r) then
-		tmp := true;
+			tmp := true;
 		end if;
 		return tmp;
 	end ">";
 
-	--------------------------------------------------------------------------------------------------------
-	-- Operator: <
-	--------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------
+-- Operator: <
+--------------------------------------------------------------------------------------------------------
 	function "<" (l:std_logic_vector; r: integer) return boolean is
 		variable tmp : boolean;
 	begin
@@ -647,9 +645,9 @@ package body std_logic_expert is
 		return tmp;
 	end "<";
 
-	--------------------------------------------------------------------------------------------------------
-	-- Operator: >=
-	--------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------
+-- Operator: >=
+--------------------------------------------------------------------------------------------------------
 	function ">=" (l:std_logic_vector; r: integer) return boolean is
 	begin
 	 return to_integer(l) >= r;
@@ -669,12 +667,13 @@ package body std_logic_expert is
 	begin
 		return to_integer(l) >= to_integer(r);
 	end ">=";
-	--------------------------------------------------------------------------------------------------------
-	-- Operator: <=
-	--------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------
+-- Operator: <=
+--------------------------------------------------------------------------------------------------------
 	function "<=" (l:std_logic_vector; r: integer) return boolean is
 	begin
-	 return to_integer(l) <= r;
+	 	return to_integer(l) <= r;
 	end "<=";
 
 	function "<=" (l:integer; r: std_logic_vector) return boolean is
@@ -692,9 +691,9 @@ package body std_logic_expert is
 		return to_integer(l) <= to_integer(r);
 	end "<=";
 
-	--------------------------------------------------------------------------------------------------------
-	-- Operator: SLA / SRA
-	--------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------
+-- Operator: SLA / SRA
+--------------------------------------------------------------------------------------------------------
 	function "rol" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector is
 		variable tmp1 : integer;
 		variable tmp2 : std_logic_vector(l'range);
@@ -714,8 +713,8 @@ package body std_logic_expert is
 	end "rol";
 
 	function "rol" (l:integer_vector; r: integer) return integer_vector is
-    variable tmp2 : integer_vector(l'range);
-  begin
+    	variable tmp2 : integer_vector(l'range);
+  	begin
 		tmp2 := l;
 		if r > 0 then
 			for j in 1 to r loop
@@ -723,16 +722,16 @@ package body std_logic_expert is
 			end loop;
 		end if;
 		return tmp2;
-  end "rol";
+  	end "rol";
 
 	function "rol" (l:integer_vector; r: unsigned) return integer_vector is
 		variable tmp1 : integer;
-    variable tmp2 : integer_vector(l'range);
-  begin
+    	variable tmp2 : integer_vector(l'range);
+	begin
 		tmp1 := to_integer(r);
 		tmp2 := l rol tmp1;
 		return tmp2;
-  end "rol";
+	end "rol";
 
 	function "ror" (l:std_logic_vector; r: std_logic_vector) return std_logic_vector is
 		variable tmp1 : integer;
@@ -754,7 +753,7 @@ package body std_logic_expert is
 
 	function "ror" (l:integer_vector; r: integer) return integer_vector is
 		variable tmp2 : integer_vector(l'range);
-  begin
+  	begin
 		tmp2 := l;
 		if r > 0 then
 			for j in 1 to r loop
@@ -762,20 +761,20 @@ package body std_logic_expert is
 			end loop;
 		end if;
 		return tmp2;
-  end "ror";
+  	end "ror";
 
 	function "ror" (l:integer_vector; r: unsigned) return integer_vector is
 		variable tmp1 : integer;
 		variable tmp2 : integer_vector(l'range);
-  begin
+  	begin
 		tmp1 := to_integer(r);
 		tmp2 := l ror tmp1;
 		return tmp2;
-  end "ror";
+  	end "ror";
 
-	--------------------------------------------------------------------------------------------------------
-	-- Operator: Index & Bus Operators
-	--------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------
+-- Operator: Index & Bus Operators
+--------------------------------------------------------------------------------------------------------
 	function size_of (input: integer) return integer is
 	begin
 		if input < 2 then
@@ -803,7 +802,6 @@ package body std_logic_expert is
 		else
 			tmp := input'high / input'length;
 		end if;
-
 		return tmp;
 	end index_of;
 
